@@ -20,8 +20,15 @@ See `docs/research_sources.md` for formulas, papers, and methodological sources.
 uv sync --extra dev
 uv run pytest -q
 
-# Optional: download public Yahoo Finance data for the curated ETF universe
-uv run python scripts/download_data.py --start 2021-01-01 --end 2025-12-31 --out data/raw/yfinance
+# Optional: build the broad active ETF universe snapshot (Nasdaq + SEC enrichment)
+uv run python scripts/build_universe.py --out data/universe
+
+# Optional: download public Yahoo Finance data for the universe
+uv run python scripts/download_data.py \
+  --universe data/universe/etf_universe_clean.csv \
+  --start 2021-01-01 \
+  --end 2025-12-31 \
+  --out data/raw/yfinance
 
 # Run the MVP pipeline after data download
 uv run python scripts/run_pipeline.py \
@@ -30,4 +37,4 @@ uv run python scripts/run_pipeline.py \
   --out results
 ```
 
-Current verified test status: **12 tests passing**.
+Current verified test status: **60 tests passing**.
