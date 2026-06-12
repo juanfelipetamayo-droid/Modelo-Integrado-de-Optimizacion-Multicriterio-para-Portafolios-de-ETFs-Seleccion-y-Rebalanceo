@@ -1,0 +1,322 @@
+# GOAL 10 criteria_config_v2.yaml
+# Status: design artifact only. Do not wire into the backtester until a separate
+# implementation goal recalculates features/profiles and re-runs OOS validation.
+# Motivation: GOAL 8 showed ELECTRE categories are not forward-monotonic; GOAL 9
+# showed ELECTRE EqualWeight underperforms Universe EqualWeight and MaxSharpe adds
+# a second optimization/estimation problem. This version therefore recalibrates the
+# classification layer first and treats MaxSharpe as a diagnostic baseline only.
+version: 2
+status: design_only_not_yet_wired
+created_for_goal: GOAL_10
+claim_boundary: >
+  Methodological redesign of ETF classification criteria after ablation tests.
+  This file does not imply improved performance until implemented end-to-end and
+  validated on out-of-sample walk-forward folds.
+
+profile_calibration:
+  method: rebalance_date_cross_sectional_quantiles
+  categories:
+    rejected: below_minimum
+    acceptable: between_minimum_preferred
+    excellent: above_preferred
+  boundary_profiles:
+    minimum:
+      target_quantile: 0.40
+      rationale: "Reject the weakest 40% after hard investability filters; avoid pretending public-data criteria are precise enough for absolute fixed thresholds."
+    preferred:
+      target_quantile: 0.70
+      rationale: "Define excellent as the upper tail of risk-adjusted, diversified, implementable ETFs rather than high trailing CAGR names."
+  lambda_cut_grid_for_sensitivity: [0.65, 0.70, 0.75, 0.80]
+  assignment_modes_for_sensitivity:
+    - pessimistic_no_veto
+    - pessimistic_with_veto
+    - optimistic_no_veto
+    - optimistic_with_veto
+  primary_assignment_candidate: pessimistic_with_veto
+  rationale: >
+    GOAL 9 found pessimistic-with-veto EqualWeight had the best ELECTRE EqualWeight
+    CAGR among tested variants, but still lost to Universe EqualWeight. It is a
+    candidate for sensitivity, not yet the final thesis specification.
+
+preprocessing_defaults:
+  rebalance_frequency: quarterly
+  feature_timestamp_rule: "Use only observations known on or before the rebalance decision date; no current metadata backfill in thesis-grade runs."
+  return_series: "Adjusted/total-return series including distributions when source supports it; public yfinance adjusted close is pilot-only."
+  cross_sectional_winsorization_default: "winsorize at 5th/95th percentiles per rebalance date unless criterion overrides."
+  normalization_default: "robust_z_score = (x - median_cross_section) / IQR_cross_section; cost criteria are multiplied by -1 only after documenting orientation."
+  missing_data_default: "Do not impute favorable values. If a criterion is unavailable for an ETF/fold, either exclude the ETF from MCDM for that fold or run an explicit missing-source sensitivity."
+  redundancy_filter_default: "Before final selected set, cluster candidates with trailing correlation >= 0.90 and keep the higher composite MCDM score within each cluster."
+
+criteria:
+  # -------------------------
+  # Hard investability filters
+  # -------------------------
+  - criterion_name: product_type_etf_or_etmf_only
+    layer: hard_filter
+    formula: "product_type in {'ETF', 'ETMF'}; reject mutual funds, closed-end funds, ETNs and non-fund securities unless experiment manifest explicitly overrides."
+    lookback: as_of_rebalance_date
+    orientation: pass_fail
+    threshold_candidate: "ETF/ETMF only"
+    source: "SEC Series/Class, N-CEN, Nasdaq Trader Symbol Directory, approved vendor security master"
+    missing_data_rule: "If product type is missing, infer from SEC/Nasdaq/name metadata; unresolved cases are excluded from thesis-grade runs and flagged in pilot runs."
+    winsorization: none_boolean_gate
+    normalization: none_boolean_gate
+    rationale: "Keeps the universe economically homogeneous; ETNs have issuer-credit and tax features that distort ETF portfolio interpretation."
+
+  - criterion_name: exclude_leveraged_inverse_complex
+    layer: hard_filter
+    formula: "Reject leveraged, inverse, short, bear, volatility-linked or path-dependent complex ETFs using metadata flags and name regex."
+    lookback: as_of_rebalance_date
+    orientation: pass_fail
+    threshold_candidate: "is_leveraged == false and is_inverse == false and complex_product_flag == false"
+    source: "SEC/N-CEN strategy text, Nasdaq metadata, fund names, approved vendor classifications"
+    missing_data_rule: "If flags are missing, use conservative name-pattern audit; unresolved cases are excluded."
+    winsorization: none_boolean_gate
+    normalization: none_boolean_gate
+    rationale: "GOAL 9 indicates the classifier is fragile; complex products add path dependence and can dominate tail risk without representing strategic ETF allocation."
+
+  - criterion_name: minimum_history_months
+    layer: hard_filter
+    formula: "months_between(max(inception_date, first_valid_total_return_date), rebalance_date) >= 24"
+    lookback: as_of_rebalance_date
+    orientation: maximize
+    threshold_candidate: 24
+    source: "SEC Series/Class first_seen/inception metadata; local adjusted/total-return panel fallback"
+    missing_data_rule: "If inception is missing use first valid price date; if both unavailable, exclude from fold."
+    winsorization: none_threshold_gate
+    normalization: none_threshold_gate
+    rationale: "Prevents young ETFs with too little risk history from receiving unstable ELECTRE assignments."
+
+  - criterion_name: minimum_price_coverage_pct
+    layer: hard_filter
+    formula: "non_missing_total_return_observations / expected_observations over feature training window >= 0.90"
+    lookback: training_window_24_months_minimum
+    orientation: maximize
+    threshold_candidate: 0.90
+    source: "Local adjusted/total-return price panel aligned to PIT universe membership"
+    missing_data_rule: "Exclude ticker from fold if coverage is below threshold; do not zero-fill missing returns."
+    winsorization: none_threshold_gate
+    normalization: none_threshold_gate
+    rationale: "Avoids false stability from missing return treatment and protects forward category diagnostics."
+
+  - criterion_name: minimum_avg_dollar_volume
+    layer: hard_filter
+    formula: "mean(adjusted_close * volume) over trailing 63 trading days >= configured liquidity floor"
+    lookback: trailing_63_trading_days
+    orientation: maximize
+    threshold_candidate: "USD 1,000,000 pilot; USD 5,000,000 thesis-grade sensitivity"
+    source: "Approved OHLCV vendor; yfinance public pilot with caveat"
+    missing_data_rule: "Exclude if price/volume data are unavailable or coverage below 90% in liquidity window."
+    winsorization: none_threshold_gate
+    normalization: none_threshold_gate
+    rationale: "Moves liquidity out of the main ELECTRE score so illiquid funds are not compensated by high return signals."
+
+  - criterion_name: minimum_aum_usd
+    layer: hard_filter_with_sensitivity
+    formula: "latest point-in-time AUM before rebalance date >= configured AUM floor"
+    lookback: latest_available_as_of_rebalance_date
+    orientation: maximize
+    threshold_candidate: "USD 50,000,000 base; USD 100,000,000 sensitivity when source supports PIT AUM"
+    source: "N-CEN/N-PORT where usable; Norgate/Morningstar/LSEG/FactSet if approved; public current metadata only as pilot-only sensitivity"
+    missing_data_rule: "For public pilot, do not reject solely for missing AUM; write missing_aum flag and run with/without missing-AUM names. For thesis-grade vendor run, require PIT AUM."
+    winsorization: none_threshold_gate
+    normalization: none_threshold_gate
+    rationale: "AUM is primarily an investability/stability gate, not a return predictor to be traded off against drawdown."
+
+  - criterion_name: maximum_expense_ratio
+    layer: hard_filter_with_penalty_sensitivity
+    formula: "net_expense_ratio <= configured maximum; if not used as hard gate, apply cost penalty in portfolio-return simulation."
+    lookback: latest_available_as_of_rebalance_date
+    orientation: minimize
+    threshold_candidate: "1.00% base; 0.75% sensitivity for broad ETF universe"
+    source: "Prospectus/N-CEN/vendor fund metadata; public metadata pilot-only if not PIT"
+    missing_data_rule: "Do not impute missing expense ratio as zero; public runs keep missing flag and report sensitivity."
+    winsorization: none_threshold_gate
+    normalization: none_threshold_gate
+    rationale: "Expense ratio should reduce implementability or simulated net return, not be outweighed by noisy trailing CAGR."
+
+  - criterion_name: minimum_price_usd
+    layer: hard_filter
+    formula: "latest adjusted close at or before rebalance date >= price floor"
+    lookback: rebalance_date_or_previous_trading_day
+    orientation: maximize
+    threshold_candidate: 5.00
+    source: "Adjusted/total-return price source"
+    missing_data_rule: "Exclude if latest eligible price cannot be found."
+    winsorization: none_threshold_gate
+    normalization: none_threshold_gate
+    rationale: "Removes stale or distressed quote behavior that can pollute volatility/correlation criteria."
+
+  # -------------------------
+  # MCDM classification criteria
+  # -------------------------
+  - criterion_name: momentum_12_1
+    layer: mcdm_criterion
+    proposed_weight: 0.18
+    formula: "prod(1 + monthly_total_returns[t-12:t-1]) - 1, skipping the most recent month"
+    lookback: trailing_12_months_skip_1_month
+    orientation: maximize
+    source: "Adjusted/total-return price series known by rebalance date"
+    missing_data_rule: "Require at least 11 monthly returns in the 12-1 window after coverage filter; otherwise exclude ETF from MCDM matrix for that fold."
+    winsorization: "5th/95th percentile cross-sectional winsorization per rebalance date."
+    normalization: "robust z-score per rebalance date."
+    rationale: "Replaces historical CAGR with a bounded, literature-standard momentum signal while avoiding most recent-month reversal. Weight is capped so return signal cannot dominate risk controls."
+
+  - criterion_name: volatility_12m
+    layer: mcdm_criterion
+    proposed_weight: 0.12
+    formula: "std(monthly_total_returns over trailing 12 months) * sqrt(12)"
+    lookback: trailing_12_months
+    orientation: minimize
+    source: "Adjusted/total-return price series"
+    missing_data_rule: "Require at least 11 monthly returns; otherwise exclude from MCDM matrix for that fold."
+    winsorization: "5th/95th percentile cross-sectional winsorization."
+    normalization: "robust z-score, lower values preferred."
+    rationale: "Keeps basic risk control but avoids using volatility alone as a proxy for quality."
+
+  - criterion_name: max_drawdown_24m
+    layer: mcdm_criterion
+    proposed_weight: 0.20
+    formula: "min(cumulative_total_return_path / running_max - 1) over trailing 24 months"
+    lookback: trailing_24_months
+    orientation: maximize
+    source: "Adjusted/total-return price series"
+    missing_data_rule: "Require at least 21 monthly returns; otherwise exclude from MCDM matrix for that fold."
+    winsorization: "5th/95th percentile cross-sectional winsorization."
+    normalization: "robust z-score; values closer to zero are preferred."
+    rationale: "GOAL 8 showed excellent categories had worse forward drawdown; drawdown must become an explicit primary classification criterion."
+
+  - criterion_name: downside_risk_sortino_24m
+    layer: mcdm_criterion
+    proposed_weight: 0.12
+    formula: "annualized mean excess monthly return / annualized downside deviation over trailing 24 months"
+    lookback: trailing_24_months
+    orientation: maximize
+    source: "Adjusted/total-return price series and risk-free-rate series available as of rebalance date"
+    missing_data_rule: "If downside deviation is zero, cap at the 95th percentile of finite cross-sectional values; if observations insufficient, exclude ETF/fold."
+    winsorization: "5th/95th percentile cross-sectional winsorization after finite-value cap."
+    normalization: "robust z-score."
+    rationale: "Preserves risk-adjusted performance information without relying on MaxSharpe expected-return estimation."
+
+  - criterion_name: beta_to_spy_24m
+    layer: mcdm_criterion
+    proposed_weight: 0.10
+    formula: "cov(monthly ETF returns, monthly SPY returns) / var(monthly SPY returns) over trailing 24 months"
+    lookback: trailing_24_months
+    orientation: minimize
+    source: "ETF adjusted/total-return series plus SPY total-return benchmark series available as of rebalance date"
+    missing_data_rule: "Require at least 21 paired observations; otherwise exclude criterion for ETF/fold and record missing_beta flag."
+    winsorization: "clip to [-1, 3], then 5th/95th cross-sectional winsorization."
+    normalization: "robust z-score; lower beta preferred unless a documented category-neutral variant changes the target."
+    rationale: "Adds market-sensitivity control requested after ablations; reduces chance that ELECTRE simply chooses high-beta risk exposure."
+
+  - criterion_name: marginal_correlation_to_eligible_universe_24m
+    layer: mcdm_criterion
+    proposed_weight: 0.12
+    formula: "mean(pairwise correlation(candidate returns, all other eligible ETF returns)) over trailing 24 months"
+    lookback: trailing_24_months
+    orientation: minimize
+    source: "Adjusted/total-return price series for current PIT eligible universe"
+    missing_data_rule: "Require at least 21 paired observations with at least 10 eligible peers; otherwise compute against available peers and flag low_peer_count."
+    winsorization: "valid correlation bounds [-1, 1]; no percentile winsorization unless cross-section has extreme data errors."
+    normalization: "robust z-score; lower correlation preferred."
+    rationale: "Adds diversification value directly to classification; addresses concentration/redundancy without waiting for optimizer to fix it."
+
+  - criterion_name: liquidity_penalty_log_adv
+    layer: mcdm_penalty_secondary
+    proposed_weight: 0.06
+    formula: "log1p(mean(adjusted_close * volume) over trailing 63 trading days) after passing hard liquidity floor"
+    lookback: trailing_63_trading_days
+    orientation: maximize
+    source: "OHLCV source available as of rebalance date"
+    missing_data_rule: "Should be non-missing after hard liquidity gate; if missing, exclude from MCDM matrix."
+    winsorization: "1st/99th percentile after log1p transform."
+    normalization: "robust z-score after log1p."
+    rationale: "Retains a small preference for tradability after moving liquidity primarily to hard filters."
+
+  - criterion_name: fund_age_stability_months
+    layer: mcdm_penalty_secondary
+    proposed_weight: 0.05
+    formula: "months_between(inception_or_first_seen_date, rebalance_date), capped at 180 months"
+    lookback: as_of_rebalance_date
+    orientation: maximize
+    source: "SEC Series/Class, N-CEN, vendor security master, local first-valid-price fallback"
+    missing_data_rule: "Use first valid price date if inception date unavailable; flag source fallback."
+    winsorization: "cap at 180 months, no percentile winsorization."
+    normalization: "monotone min-max after cap or robust z-score; document chosen transform in run manifest."
+    rationale: "Small stabilizer to avoid over-selecting very new funds with unstable estimated criteria."
+
+  - criterion_name: expense_ratio_penalty
+    layer: mcdm_penalty_optional
+    proposed_weight: 0.05
+    formula: "latest point-in-time net_expense_ratio; use only when PIT source exists, otherwise omit and report missing-source sensitivity"
+    lookback: latest_available_as_of_rebalance_date
+    orientation: minimize
+    source: "Prospectus/N-CEN/vendor PIT fund metadata; public current metadata only pilot-only"
+    missing_data_rule: "If no PIT expense source, omit this criterion entirely rather than backfilling current values."
+    winsorization: "1st/99th percentile when enough observations; otherwise none."
+    normalization: "robust z-score; lower expense preferred."
+    rationale: "Expense ratio matters economically but should not be faked with non-PIT public metadata."
+
+  - criterion_name: aum_stability_log
+    layer: mcdm_penalty_optional
+    proposed_weight: 0.00
+    formula: "log1p(latest point-in-time AUM) after passing AUM hard-filter sensitivity"
+    lookback: latest_available_as_of_rebalance_date
+    orientation: maximize
+    source: "N-CEN/N-PORT/vendor PIT fund metadata"
+    missing_data_rule: "Default v2 weight is zero until PIT AUM source is approved; use only in vendor-data sensitivity."
+    winsorization: "5th/95th percentile after log1p when enabled."
+    normalization: "robust z-score after log1p."
+    rationale: "AUM is better as a hard filter; optional zero-weight placeholder documents how to add it without contaminating public pilot runs."
+
+excluded_or_deferred_criteria:
+  - criterion_name: historical_cagr
+    decision: remove_from_primary_mcdm
+    rationale: "GOAL 8 showed excellent categories built from historical performance did not produce superior forward performance; historical CAGR remains an evaluation metric only."
+  - criterion_name: raw_recent_return
+    decision: replace_with_momentum_12_1
+    rationale: "Raw recent return is more vulnerable to short-term reversal and performance chasing."
+  - criterion_name: tracking_error_vs_category_benchmark
+    decision: defer_until_correct_category_benchmark_mapping_exists
+    rationale: "User explicitly required eliminating tracking error if no correct benchmark by category exists; using SPY for all ETFs would be methodologically wrong."
+  - criterion_name: avg_dollar_volume_as_primary_score
+    decision: move_to_hard_filter_plus_small_secondary_penalty
+    rationale: "Liquidity should determine investability first; after the floor it should not dominate classification."
+  - criterion_name: aum_as_primary_score
+    decision: move_to_hard_filter_or_zero_weight_optional
+    rationale: "AUM is source-limited and better handled as an investability/stability gate."
+  - criterion_name: expense_ratio_as_primary_score
+    decision: hard_filter_or_optional_penalty_only_when_PIT_available
+    rationale: "Non-PIT expense data would introduce lookahead/current-metadata bias."
+
+proposed_primary_weight_sum_check:
+  included_nonzero_weights:
+    momentum_12_1: 0.18
+    volatility_12m: 0.12
+    max_drawdown_24m: 0.20
+    downside_risk_sortino_24m: 0.12
+    beta_to_spy_24m: 0.10
+    marginal_correlation_to_eligible_universe_24m: 0.12
+    liquidity_penalty_log_adv: 0.06
+    fund_age_stability_months: 0.05
+    expense_ratio_penalty: 0.05
+  total: 1.00
+
+redundancy_filter:
+  enabled_in_design: true
+  formula: "After MCDM scoring but before final selected set, compute trailing 24m correlations among accepted/excellent ETFs; for clusters with pairwise correlation >= 0.90, keep the ETF with higher composite normalized MCDM score and adequate liquidity."
+  lookback: trailing_24_months
+  orientation: minimize_redundancy
+  source: "Adjusted/total-return price series for accepted candidates"
+  missing_data_rule: "If correlation window is incomplete, do not drop solely for redundancy; flag incomplete_redundancy_check."
+  winsorization: "Correlation naturally bounded [-1, 1]."
+  normalization: "Not normalized; applied as post-classification cluster filter."
+  rationale: "GOAL 9 showed high turnover and weak selection value; reducing redundant holdings should make selection more stable and interpretable."
+
+next_implementation_steps:
+  - "Add feature calculators for momentum_12_1, max_drawdown_24m, beta_to_spy_24m, marginal_correlation_to_eligible_universe_24m, and redundancy clusters."
+  - "Add YAML validator tests for criteria_config_v2.yaml before wiring into pipeline."
+  - "Calibrate ELECTRE profiles from cross-sectional quantiles per rebalance date; do not reuse fixed legacy profiles."
+  - "Run classification diagnostics first; require monotonic category_forward_returns/sharpe/drawdown improvement before claiming portfolio improvements."
+  - "Then rerun GOAL 9 ablations with EqualWeight/InverseVol/MinVariance before considering MaxSharpe again."

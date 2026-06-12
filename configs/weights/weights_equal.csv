@@ -1,0 +1,12 @@
+criterion_name,weight,method,elicitation_source,rationale
+momentum_12_1,0.09090909090909091,equal_weights_baseline,Neutral baseline: every MCDM criterion receives identical weight.,Captura persistencia intermedia sin usar CAGR histórico dominante.
+volatility_annualized,0.09090909090909091,equal_weights_baseline,Neutral baseline: every MCDM criterion receives identical weight.,Controla riesgo total ex ante dentro de la clasificación MCDM.
+rolling_max_drawdown,0.09090909090909091,equal_weights_baseline,Neutral baseline: every MCDM criterion receives identical weight.,Prioridad principal BWM: limita fragilidad de cola observada en OOS largo.
+rolling_sortino,0.09090909090909091,equal_weights_baseline,Neutral baseline: every MCDM criterion receives identical weight.,Premia retorno ajustado por downside sin depender de CAGR puro.
+avg_dollar_volume,0.09090909090909091,equal_weights_baseline,Neutral baseline: every MCDM criterion receives identical weight.,Asegura liquidez operable después de filtros duros.
+expense_ratio,0.09090909090909091,equal_weights_baseline,Neutral baseline: every MCDM criterion receives identical weight.,Penaliza fricción estructural del ETF.
+tracking_error_vs_category_benchmark,0.09090909090909091,equal_weights_baseline,Neutral baseline: every MCDM criterion receives identical weight.,Favorece eficiencia de implementación frente al benchmark correcto.
+beta_vs_category_benchmark,0.09090909090909091,equal_weights_baseline,Neutral baseline: every MCDM criterion receives identical weight.,Controla sensibilidad sistemática por categoría.
+marginal_correlation_to_selected_universe,0.09090909090909091,equal_weights_baseline,Neutral baseline: every MCDM criterion receives identical weight.,Introduce beneficio de diversificación marginal.
+fund_age_months,0.09090909090909091,equal_weights_baseline,Neutral baseline: every MCDM criterion receives identical weight.,"Criterio secundario; estabilidad operativa, no driver principal."
+aum_usd,0.09090909090909091,equal_weights_baseline,Neutral baseline: every MCDM criterion receives identical weight.,"Proxy de escala/viabilidad, subordinado a riesgo y calidad de seguimiento."

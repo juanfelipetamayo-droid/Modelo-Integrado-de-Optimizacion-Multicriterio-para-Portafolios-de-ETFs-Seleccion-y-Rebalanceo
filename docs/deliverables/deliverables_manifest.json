@@ -1,0 +1,62 @@
+{
+  "baseline_result_dir": "results/sprint_universe_paper_quarterly_2015_2025_oos",
+  "candidate_result_dir": "results/sprint_universe_paper_quarterly_2015_2025_every_confirm2_m030_cap025",
+  "claim_boundary": "Public-data pilot evidence; not survivorship-bias-free; presentation-ready research artifact, not investment advice.",
+  "deliverables": {
+    "docx": "docs/deliverables/tesis_trabajo_grado_etf_electre.docx",
+    "front_html": "docs/deliverables/front_presentacion/index.html",
+    "pptx": "docs/deliverables/presentacion_sustentacion_etf_electre.pptx",
+    "pdf": "docs/deliverables/tesis_trabajo_grado_etf_electre.pdf"
+  },
+  "metrics": {
+    "baseline": {
+      "cagr": -0.0108360396655233,
+      "calmar": -0.0248839783356574,
+      "max_drawdown": -0.4354625100278235,
+      "sharpe": 0.0107897898010289,
+      "volatility": 0.1584389473839619
+    },
+    "candidate": {
+      "cagr": 0.0246775410059141,
+      "calmar": 0.1027622565294892,
+      "max_drawdown": -0.2401420700491578,
+      "sharpe": 0.2470017180278104,
+      "volatility": 0.1360867904216218
+    },
+    "candidate_events": {
+      "calendar": 1,
+      "category_change": 4
+    },
+    "candidate_turnover": 4.016066334501966,
+    "cap": {
+      "cagr": 0.0040703476882444,
+      "calmar": 0.0163874424907366,
+      "max_drawdown": -0.2483821188416251,
+      "sharpe": 0.0929932973599516,
+      "volatility": 0.1162647983713816
+    },
+    "deltas": {
+      "cagr": 0.0355135806714374,
+      "calmar": 0.1276462348651466,
+      "max_drawdown": 0.1953204399786657,
+      "sharpe": 0.2362119282267815,
+      "volatility": -0.02235215696234008
+    }
+  },
+  "title": "Modelo integrado de optimización multicriterio para portafolios de ETFs",
+  "thesis_long_form": {
+    "status": "expanded_formal_replicable_draft_pdf_rendered",
+    "sections": 22,
+    "word_count_including_tables": 20729,
+    "estimated_pages": {
+      "at_300_words_per_page": 69.1,
+      "at_275_words_per_page": 75.4
+    },
+    "claim_boundary": "Evidencia pública piloto; metodología reproducible; no recomendación de inversión ni prueba final survivor-bias-free.",
+    "primary_pilot_result_dir": "results/static_current_quarterly_2021_2025_new_method_cap025_cov095",
+    "long_candidate_result_dir": "results/sprint_universe_paper_quarterly_2015_2025_every_confirm2_m030_cap025",
+    "point_in_time_pilot_result_dir": "results/point_in_time_quarterly_2018_2022_cov100",
+    "exact_pdf_pages": 69,
+    "pdf_renderer": "LibreOffice 24.2.7.2 writer_pdf_Export"
+  }
+}

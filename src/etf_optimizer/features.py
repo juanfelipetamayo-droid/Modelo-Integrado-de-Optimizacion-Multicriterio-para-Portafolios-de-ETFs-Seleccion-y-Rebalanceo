@@ -76,9 +76,58 @@ def max_drawdown(returns: pd.Series) -> float:
     return float(drawdown.min())
 
 
+def tracking_error(
+    returns: pd.Series,
+    benchmark_returns: pd.Series,
+    periods_per_year: int = 252,
+) -> float:
+    """Annualized tracking error against an aligned benchmark return series."""
+    aligned = pd.concat([pd.Series(returns), pd.Series(benchmark_returns)], axis=1).dropna()
+    if aligned.shape[0] < 2:
+        return np.nan
+    active = aligned.iloc[:, 0] - aligned.iloc[:, 1]
+    return float(active.std(ddof=1) * np.sqrt(periods_per_year))
+
+
+def _benchmark_for_ticker(
+    ticker: str,
+    benchmark_returns: pd.Series | pd.DataFrame | None,
+    benchmark_map: dict[str, str] | None,
+) -> pd.Series | None:
+    if benchmark_returns is None:
+        return None
+    if isinstance(benchmark_returns, pd.Series):
+        return benchmark_returns
+    if benchmark_map and ticker in benchmark_map and benchmark_map[ticker] in benchmark_returns.columns:
+        return benchmark_returns[benchmark_map[ticker]]
+    if ticker in benchmark_returns.columns:
+        return benchmark_returns[ticker]
+    if benchmark_returns.shape[1] == 1:
+        return benchmark_returns.iloc[:, 0]
+    return None
+
+
+def _expense_ratio_for_ticker(ticker: str, expense_ratios: pd.Series | dict[str, float] | pd.DataFrame | None) -> float:
+    if expense_ratios is None:
+        return np.nan
+    if isinstance(expense_ratios, dict):
+        return float(expense_ratios.get(ticker, np.nan))
+    if isinstance(expense_ratios, pd.Series):
+        return float(expense_ratios.get(ticker, np.nan))
+    if "ticker" in expense_ratios.columns and "expense_ratio" in expense_ratios.columns:
+        ratios = expense_ratios.drop_duplicates("ticker").set_index("ticker")["expense_ratio"]
+        return float(ratios.get(ticker, np.nan))
+    if ticker in expense_ratios.index and "expense_ratio" in expense_ratios.columns:
+        return float(expense_ratios.loc[ticker, "expense_ratio"])
+    return np.nan
+
+
 def compute_feature_table(
     prices: pd.DataFrame,
     volume: pd.DataFrame | None = None,
+    benchmark_returns: pd.Series | pd.DataFrame | None = None,
+    benchmark_map: dict[str, str] | None = None,
+    expense_ratios: pd.Series | dict[str, float] | pd.DataFrame | None = None,
     risk_free_rate: float = 0.0,
     periods_per_year: int = 252,
 ) -> pd.DataFrame:
@@ -87,9 +136,8 @@ def compute_feature_table(
     Result columns: cagr, volatility, sharpe, sortino, max_drawdown and
     (when volume is provided) avg_dollar_volume.
 
-    Tracking error and expense ratio are not computed here — tracking error
-    needs a benchmark series and expense ratio requires external fund data.
-    These can be added as separate columns before passing to ElectreTri.
+    Tracking error is computed when benchmark returns are supplied. Expense
+    ratio is attached when external fund-level values are supplied.
 
     ELECTRE criteria later declares whether each column is benefit (max) or cost (min).
     """
@@ -106,5 +154,14 @@ def compute_feature_table(
         }
         if volume is not None and ticker in volume:
             aligned_price = prices[ticker].reindex(volume.index)
-            rows[ticker]["avg_dollar_volume"] = float((aligned_price * volume[ticker]).dropna().mean())
+            avg_dollar_volume = float((aligned_price * volume[ticker]).dropna().mean())
+            rows[ticker]["avg_dollar_volume"] = avg_dollar_volume
+            # Thesis wording uses "liquidez" as a criterion; the auditable
+            # implementation proxy is average dollar volume.
+            rows[ticker]["liquidity"] = avg_dollar_volume
+        benchmark = _benchmark_for_ticker(ticker, benchmark_returns, benchmark_map)
+        if benchmark is not None:
+            rows[ticker]["tracking_error"] = tracking_error(r, benchmark, periods_per_year)
+        if expense_ratios is not None:
+            rows[ticker]["expense_ratio"] = _expense_ratio_for_ticker(ticker, expense_ratios)
     return pd.DataFrame.from_dict(rows, orient="index")

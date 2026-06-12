@@ -1,0 +1,12 @@
+criterion_name,weight,method,elicitation_source,rationale
+momentum_12_1,0.10638297872340426,BWM_weights_main,Expert 1 researcher/Hermes mini-elicitation; expert 2 director/profesor pending.,Captura persistencia intermedia sin usar CAGR histórico dominante.
+volatility_annualized,0.10638297872340426,BWM_weights_main,Expert 1 researcher/Hermes mini-elicitation; expert 2 director/profesor pending.,Controla riesgo total ex ante dentro de la clasificación MCDM.
+rolling_max_drawdown,0.18912529550827423,BWM_weights_main,Expert 1 researcher/Hermes mini-elicitation; expert 2 director/profesor pending.,Prioridad principal BWM: limita fragilidad de cola observada en OOS largo.
+rolling_sortino,0.10638297872340426,BWM_weights_main,Expert 1 researcher/Hermes mini-elicitation; expert 2 director/profesor pending.,Premia retorno ajustado por downside sin depender de CAGR puro.
+avg_dollar_volume,0.07092198581560284,BWM_weights_main,Expert 1 researcher/Hermes mini-elicitation; expert 2 director/profesor pending.,Asegura liquidez operable después de filtros duros.
+expense_ratio,0.07092198581560284,BWM_weights_main,Expert 1 researcher/Hermes mini-elicitation; expert 2 director/profesor pending.,Penaliza fricción estructural del ETF.
+tracking_error_vs_category_benchmark,0.10638297872340426,BWM_weights_main,Expert 1 researcher/Hermes mini-elicitation; expert 2 director/profesor pending.,Favorece eficiencia de implementación frente al benchmark correcto.
+beta_vs_category_benchmark,0.07092198581560284,BWM_weights_main,Expert 1 researcher/Hermes mini-elicitation; expert 2 director/profesor pending.,Controla sensibilidad sistemática por categoría.
+marginal_correlation_to_selected_universe,0.10638297872340426,BWM_weights_main,Expert 1 researcher/Hermes mini-elicitation; expert 2 director/profesor pending.,Introduce beneficio de diversificación marginal.
+fund_age_months,0.02364066193853428,BWM_weights_main,Expert 1 researcher/Hermes mini-elicitation; expert 2 director/profesor pending.,"Criterio secundario; estabilidad operativa, no driver principal."
+aum_usd,0.0425531914893617,BWM_weights_main,Expert 1 researcher/Hermes mini-elicitation; expert 2 director/profesor pending.,"Proxy de escala/viabilidad, subordinado a riesgo y calidad de seguimiento."

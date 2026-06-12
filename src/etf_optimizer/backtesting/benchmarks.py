@@ -59,6 +59,84 @@ def benchmark_equal_weight(
     return returns.dot(w)
 
 
+def _covariance_for_training_window(returns: pd.DataFrame, periods_per_year: int) -> pd.DataFrame:
+    return (
+        ledoit_wolf_covariance(returns, periods_per_year)
+        if len(returns) > returns.shape[1]
+        else sample_covariance(returns, periods_per_year)
+    )
+
+
+def equal_weight_strategy(train_returns: pd.DataFrame) -> pd.Series:
+    """Equal-weight allocation estimated from the current training universe."""
+    return equal_weight(train_returns.columns)
+
+
+def min_variance_strategy(
+    train_returns: pd.DataFrame,
+    periods_per_year: int = 252,
+    max_weight: float | None = None,
+) -> pd.Series:
+    """Minimum-variance weights estimated only from a training window."""
+    cov = _covariance_for_training_window(train_returns, periods_per_year)
+    return min_variance_weights(cov, max_weight=max_weight)
+
+
+def max_sharpe_strategy(
+    train_returns: pd.DataFrame,
+    risk_free_rate: float = 0.0,
+    periods_per_year: int = 252,
+    max_weight: float | None = None,
+) -> pd.Series:
+    """Maximum-Sharpe weights estimated only from a training window."""
+    cov = _covariance_for_training_window(train_returns, periods_per_year)
+    expected = train_returns.mean() * periods_per_year
+    try:
+        return max_sharpe_weights(expected, cov, risk_free_rate=risk_free_rate, max_weight=max_weight)
+    except Exception:
+        return min_variance_weights(cov, max_weight=max_weight)
+
+
+def benchmark_equal_weight_walk_forward(
+    returns: pd.DataFrame,
+    config: BacktestConfig,
+) -> BacktestResult:
+    """Out-of-sample equal-weight benchmark using walk-forward windows."""
+    return WalkForwardBacktester(config).run(returns, equal_weight_strategy)
+
+
+def benchmark_min_variance_walk_forward(
+    returns: pd.DataFrame,
+    config: BacktestConfig,
+    periods_per_year: int = 252,
+    max_weight: float | None = None,
+) -> BacktestResult:
+    """Out-of-sample minimum-variance benchmark using training-window weights."""
+    return WalkForwardBacktester(config).run(
+        returns,
+        lambda train: min_variance_strategy(train, periods_per_year=periods_per_year, max_weight=max_weight),
+    )
+
+
+def benchmark_max_sharpe_walk_forward(
+    returns: pd.DataFrame,
+    config: BacktestConfig,
+    risk_free_rate: float = 0.0,
+    periods_per_year: int = 252,
+    max_weight: float | None = None,
+) -> BacktestResult:
+    """Out-of-sample maximum-Sharpe benchmark using training-window weights."""
+    return WalkForwardBacktester(config).run(
+        returns,
+        lambda train: max_sharpe_strategy(
+            train,
+            risk_free_rate=risk_free_rate,
+            periods_per_year=periods_per_year,
+            max_weight=max_weight,
+        ),
+    )
+
+
 def benchmark_min_variance(
     returns: pd.DataFrame,
     periods_per_year: int = 252,

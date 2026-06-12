@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ETF ELECTRE Tri · Front de diagnóstico</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --surface: oklch(97.5% 0.009 246);
+      --surface-raised: oklch(99.2% 0.006 246);
+      --surface-muted: oklch(94.6% 0.012 246);
+      --ink: oklch(24% 0.045 252);
+      --ink-muted: oklch(46% 0.026 252);
+      --line: oklch(88% 0.014 246);
+      --accent: oklch(55% 0.145 238);
+      --accent-soft: oklch(92% 0.042 238);
+      --success: oklch(57% 0.112 166);
+      --warning: oklch(70% 0.13 72);
+      --danger: oklch(58% 0.12 28);
+      --shadow: 0 18px 48px color-mix(in oklch, var(--ink) 12%, transparent);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --surface: oklch(19% 0.018 252);
+        --surface-raised: oklch(24% 0.02 252);
+        --surface-muted: oklch(28% 0.022 252);
+        --ink: oklch(92% 0.012 246);
+        --ink-muted: oklch(72% 0.018 246);
+        --line: oklch(34% 0.026 252);
+        --accent: oklch(72% 0.12 238);
+        --accent-soft: oklch(33% 0.048 238);
+        --shadow: 0 18px 48px color-mix(in oklch, black 24%, transparent);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+    a { color: var(--accent); font-weight: 650; text-decoration-thickness: .08em; text-underline-offset: .18em; }
+    .shell { display: grid; grid-template-columns: 280px minmax(0, 1fr); min-height: 100vh; }
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 28px 22px;
+      background: var(--surface-muted);
+      border-inline-end: 1px solid var(--line);
+    }
+    .brand { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); }
+    nav { display: grid; gap: 8px; margin-top: 28px; }
+    nav a {
+      color: var(--ink);
+      text-decoration: none;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    nav a:hover, nav a:focus-visible { background: var(--accent-soft); outline: 2px solid color-mix(in oklch, var(--accent) 42%, transparent); outline-offset: 2px; }
+    main { padding: 36px min(6vw, 72px) 72px; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(280px, .85fr);
+      gap: 28px;
+      align-items: start;
+    }
+    h1 { max-width: 920px; margin: 0; font-size: 42px; line-height: 1.05; letter-spacing: -.035em; }
+    h2 { margin: 0 0 14px; font-size: 24px; line-height: 1.15; letter-spacing: -.02em; }
+    h3 { margin: 0 0 6px; font-size: 15px; }
+    p { margin: 0; max-width: 72ch; color: var(--ink-muted); }
+    .lead { margin-top: 18px; font-size: 17px; color: var(--ink-muted); }
+    .panel {
+      background: var(--surface-raised);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .status { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; font-size: 14px; color: var(--ink-muted); }
+    .status__dot { width: 10px; height: 10px; border-radius: 999px; background: var(--success); box-shadow: 0 0 0 5px color-mix(in oklch, var(--success) 18%, transparent); }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 12px; margin-top: 28px; }
+    .metric { background: var(--surface-raised); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
+    .metric strong { display: block; color: var(--accent); font-size: 28px; line-height: 1; letter-spacing: -.03em; }
+    .metric span { display: block; margin-top: 8px; color: var(--ink-muted); font-size: 13px; }
+    .metric em { display: inline-block; margin-top: 12px; padding: 4px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--ink); font-size: 12px; font-style: normal; font-weight: 650; }
+    .chart-shell { background: var(--surface-raised); border: 1px solid var(--line); border-radius: 24px; padding: 20px; box-shadow: var(--shadow); }
+    .chart-header { display: flex; justify-content: space-between; gap: 18px; align-items: start; margin-bottom: 18px; }
+    .chart-header p { margin-top: 6px; }
+    .toggle-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; max-width: 620px; }
+    .toggle-grid label { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 650; cursor: pointer; }
+    .toggle-grid input { accent-color: var(--accent); }
+    .chart-frame { position: relative; min-height: 380px; overflow: hidden; border-radius: 18px; background: color-mix(in oklch, var(--surface) 82%, var(--surface-raised)); border: 1px solid var(--line); }
+    .chart-frame svg { display: block; width: 100%; height: 380px; }
+    .chart-empty { padding: 38px; color: var(--ink-muted); }
+    .chart-tooltip { position: absolute; pointer-events: none; transform: translate(-50%, calc(-100% - 14px)); background: var(--ink); color: var(--surface); padding: 8px 10px; border-radius: 10px; font-size: 12px; opacity: 0; transition: opacity 160ms ease-out; max-width: 260px; }
+    .event-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; color: var(--ink-muted); font-size: 12px; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 999px; display: inline-block; margin-right: 6px; background: var(--warning); }
+    section { margin-top: 42px; }
+    .purpose { display: grid; grid-template-columns: .8fr 1.2fr; gap: 24px; align-items: start; }
+    .purpose ul { margin: 0; padding-inline-start: 20px; color: var(--ink-muted); }
+    .purpose li + li { margin-top: 10px; }
+    .workflow { display: grid; gap: 14px; }
+    .phase { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 18px; align-items: start; padding: 20px 0; border-top: 1px solid var(--line); }
+    .phase:first-child { border-top: 0; }
+    .phase__label { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-muted); font-weight: 750; }
+    .steps { display: grid; gap: 10px; }
+    .step { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: start; padding: 14px; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 16px; }
+    .step__number { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 13px; }
+    .comparison { overflow-x: auto; border: 1px solid var(--line); border-radius: 18px; background: var(--surface-raised); }
+    table { width: 100%; border-collapse: collapse; min-width: 680px; }
+    th, td { padding: 14px 16px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { color: var(--ink-muted); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    .callout { display: grid; grid-template-columns: 34px 1fr; gap: 14px; background: color-mix(in oklch, var(--warning) 13%, var(--surface-raised)); border: 1px solid color-mix(in oklch, var(--warning) 38%, var(--line)); border-radius: 18px; padding: 18px; }
+    .callout strong { color: var(--ink); }
+    .command-card { background: var(--surface-raised); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+    .command-toolbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); color: var(--ink-muted); font-size: 13px; }
+    .copy-button { border: 1px solid var(--line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 7px 12px; font: inherit; font-weight: 700; cursor: pointer; }
+    .copy-button:hover, .copy-button:focus-visible { outline: 2px solid color-mix(in oklch, var(--accent) 44%, transparent); outline-offset: 2px; }
+    .command { margin: 0; padding: 18px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; color: var(--ink); }
+    .links { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+    .link-card { display: block; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-raised); text-decoration: none; }
+    .link-card:hover, .link-card:focus-visible { transform: translateY(-1px); outline: 2px solid color-mix(in oklch, var(--accent) 36%, transparent); outline-offset: 2px; }
+    .link-card span { display: block; color: var(--ink-muted); font-size: 13px; font-weight: 500; margin-top: 5px; }
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; }
+      aside { position: static; height: auto; }
+      nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hero, .purpose, .phase { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
+      main { padding: 28px 18px 56px; }
+      h1 { font-size: 32px; }
+      .metrics { grid-template-columns: 1fr; }
+      nav { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside aria-label="Navegación principal">
+      <div class="brand">ETF Optimizer</div>
+      <nav>
+        <a href="#proposito">Propósito</a>
+        <a href="#proceder">Proceder correcto</a>
+        <a href="#metricas">Métricas</a>
+        <a href="#grafico">Gráfico</a>
+        <a href="#datos">Datos PIT</a>
+        <a href="#comando">Ejecución</a>
+        <a href="#artefactos">Artefactos</a>
+      </nav>
+    </aside>
+    <main>
+      <section class="hero" aria-labelledby="titulo">
+        <div>
+          <div class="brand">Front académico operativo</div>
+          <h1 id="titulo">Diagnóstico, planeación y ejecución de portafolios ETF con ELECTRE Tri</h1>
+          <p class="lead">Este frontend no vende una estrategia. Ordena la revisión para que cada corrida tenga hipótesis, evidencia, límites y trazabilidad antes de presentarse en sustentación.</p>
+        </div>
+        <div class="panel">
+          <div class="status"><span class="status__dot" aria-hidden="true"></span> Artefacto local listo para revisión</div>
+          <p><strong>Uso esperado:</strong> abrir este archivo durante la revisión, seguir el procedimiento, copiar el comando aprobado y contrastar los CSVs generados.</p>
+        </div>
+      </section>
+
+      <section id="metricas" class="metrics" aria-label="Métricas del candidato">
+        <div class="metric"><strong>2.47%</strong><span>CAGR candidato</span><em>mejora vs baseline</em></div>
+        <div class="metric"><strong>0.247</strong><span>Sharpe candidato</span><em>requiere validación</em></div>
+        <div class="metric"><strong>-24.01%</strong><span>Max drawdown</span><em>riesgo reducido</em></div>
+        <div class="metric"><strong>4.02</strong><span>Turnover total</span><em>más controlado</em></div>
+      </section>
+
+      <section id="grafico" class="chart-shell" aria-labelledby="grafico-title">
+        <div class="chart-header">
+          <div>
+            <h2 id="grafico-title">Strategy timeline with rebalance points</h2>
+            <p>Compare cumulative equity curves across strategies and benchmarks. Rebalance events are plotted as points on every active line.</p>
+          </div>
+          <div class="toggle-grid" id="strategy-toggles" aria-label="Toggle strategies and benchmarks"></div>
+        </div>
+        <div class="chart-frame">
+          <svg id="strategy-chart" role="img" aria-label="Equity curves by strategy with rebalance points"></svg>
+          <div class="chart-tooltip" id="chart-tooltip"></div>
+        </div>
+        <div class="event-legend"><span><i class="legend-dot"></i>Rebalance event</span><span>Toggle lines to isolate a method or benchmark.</span></div>
+      </section>
+
+      <section id="proposito" class="purpose">
+        <div>
+          <h2>Propósito funcional</h2>
+          <p>Convertir resultados dispersos en una ruta de decisión: diagnosticar el problema, planear una variante y ejecutar solo con criterios definidos.</p>
+        </div>
+        <div class="panel"><ul><li>Guiar una revisión académica reproducible antes de afirmar mejoras de portafolio.</li>
+<li>Separar hallazgos empíricos, límites de inferencia y artefactos auditables.</li>
+<li>Hacer explícito cuándo diagnosticar, cuándo planear una corrida y cuándo ejecutar.</li></ul></div>
+      </section>
+
+      <section id="proceder">
+        <h2>Proceder correcto</h2>
+        <div class="workflow">
+          <div class="phase">
+            <div class="phase__label">Diagnóstico</div>
+            <div class="steps">
+            <article class="step">
+              <span class="step__number">01</span>
+              <div>
+                <h3>Integridad de datos</h3>
+                <p>Verificar cobertura, fechas, volumen, universo y fuentes públicas antes de leer métricas.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <span class="step__number">02</span>
+              <div>
+                <h3>Comparabilidad</h3>
+                <p>Confirmar que baseline y candidato comparten ventana, costes, frecuencia y reglas de elegibilidad.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <span class="step__number">03</span>
+              <div>
+                <h3>Fallo dominante</h3>
+                <p>Localizar concentración por holdings, categoría, régimen o fold antes de cambiar parámetros.</p>
+              </div>
+            </article></div>
+          </div>
+          <div class="phase">
+            <div class="phase__label">Planeación</div>
+            <div class="steps">
+            <article class="step">
+              <span class="step__number">04</span>
+              <div>
+                <h3>Hipótesis de cambio</h3>
+                <p>Documentar qué se espera mejorar: drawdown, turnover, concentración o estabilidad de categoría.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <span class="step__number">05</span>
+              <div>
+                <h3>Diseño de corrida</h3>
+                <p>Elegir ELECTRE, drift, rebalanceo, tolerancias y criterios de aceptación antes del comando.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <span class="step__number">06</span>
+              <div>
+                <h3>Guardarraíles</h3>
+                <p>Definir límites: no investment advice, no claim vs SPY sin prueba robusta, datos no point-in-time.</p>
+              </div>
+            </article></div>
+          </div>
+          <div class="phase">
+            <div class="phase__label">Ejecución</div>
+            <div class="steps">
+            <article class="step">
+              <span class="step__number">07</span>
+              <div>
+                <h3>Comando visible</h3>
+                <p>Mostrar el comando completo para aprobación humana antes de correr procesos locales.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <span class="step__number">08</span>
+              <div>
+                <h3>Validación</h3>
+                <p>Revisar tests, manifests, provenance, eventos de rebalanceo y CSVs generados.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <span class="step__number">09</span>
+              <div>
+                <h3>Decisión</h3>
+                <p>Clasificar el resultado como aceptado, observado o rechazado con evidencia trazable.</p>
+              </div>
+            </article></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Comparación contra baseline largo</h2>
+        <div class="comparison">
+          <table>
+            <thead><tr><th>Métrica</th><th>Baseline</th><th>Candidato</th><th>Delta</th></tr></thead>
+            <tbody>
+              <tr><td>CAGR</td><td>-1.08%</td><td>2.47%</td><td>3.55%</td></tr>
+              <tr><td>Sharpe</td><td>0.011</td><td>0.247</td><td>0.236</td></tr>
+              <tr><td>Max Drawdown</td><td>-43.55%</td><td>-24.01%</td><td>19.53%</td></tr>
+              <tr><td>Volatilidad</td><td>15.84%</td><td>13.61%</td><td>-2.24%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="callout" aria-label="Límite académico">
+        <span aria-hidden="true">⚠</span>
+        <p><strong>Límite de tesis:</strong> evidencia pública piloto, no survivorship-bias-free. El candidato mejora robustez del baseline, pero no debe presentarse como superior a SPY/60-40 ni como recomendación de inversión.</p>
+      </section>
+
+      <section id="datos" class="panel">
+        <h2>Próximo paso de datos point-in-time</h2>
+        <p>El universo actual viene de un snapshot activo de Nasdaq. Para una tesis empírica fuerte, el siguiente paso ideal es usar una base institucional point-in-time como CRSP, Morningstar Direct, Lipper, Bloomberg o Refinitiv/LSEG, o construir snapshots históricos por año si aparece una fuente pública archivada estable.</p>
+        <p>Documento incorporado: <a href="../../research/etf_point_in_time_data_sources.md">matriz de fuentes ETF point-in-time</a>.</p>
+      </section>
+
+      <section id="comando">
+        <h2>Ejecución aprobable</h2>
+        <p>La interfaz muestra el comando antes de correrlo. Esto respeta el principio de no ejecutar procesos locales sin confirmación humana.</p>
+        <div class="command-card">
+          <div class="command-toolbar"><span>Comando reproducible</span><button class="copy-button" type="button" data-copy-command>Copiar comando</button></div>
+          <pre class="command"><code id="run-command">uv run python scripts/run_sprint_experiment.py --universe data/universe/etf_universe_clean.csv --prices data/raw/yfinance_pilot_2015_2025/close.parquet --volume data/raw/yfinance_pilot_2015_2025/volume.parquet --start 2015-01-05 --end 2025-12-31 --rebalance quarterly --weight-drift buy_and_hold --rebalance-policy threshold --drift-tolerance 0.05 --electre-assignment pessimistic --disable-veto --recategorization-policy every_period --category-confirmation-periods 2 --category-change-min-score-improvement 0.30 --category-exposure-cap 0.25 --cost-bps 10 --min-coverage-pct 0.80 --min-avg-dollar-volume 0 --out results/sprint_universe_paper_quarterly_2015_2025_every_confirm2_m030_cap025</code></pre>
+        </div>
+      </section>
+
+      <section id="artefactos">
+        <h2>Artefactos para revisión</h2>
+        <div class="links">
+          <a class="link-card" href="../tesis_trabajo_grado_etf_electre.docx">Documento de tesis DOCX<span>Marco, metodología, resultados y límites.</span></a>
+          <a class="link-card" href="../presentacion_sustentacion_etf_electre.pptx">Presentación PPTX<span>Narrativa defendible para sustentación.</span></a>
+          <a class="link-card" href="../../traceability/milestone_metrics_history.md">Historial de hitos<span>Trazabilidad de decisiones y métricas.</span></a>
+          <a class="link-card" href="../../../results/sprint_universe_paper_quarterly_2015_2025_every_confirm2_m030_cap025/strategy_comparison.csv">Resultados CSV<span>Tabla fuente de comparación.</span></a>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script id="front-chart-data" type="application/json">{"series": [{"name": "ELECTRE_MaxSharpe_walk_forward", "kind": "strategy", "values": [{"date": "2018-02-28", "value": 0.959552}, {"date": "2018-03-31", "value": 0.953281}, {"date": "2018-04-30", "value": 0.947538}, {"date": "2018-05-31", "value": 0.965483}, {"date": "2018-06-30", "value": 0.948509}, {"date": "2018-07-31", "value": 0.962815}, {"date": "2018-08-31", "value": 0.962251}, {"date": "2018-09-30", "value": 0.947436}, {"date": "2018-10-31", "value": 0.873573}, {"date": "2018-11-30", "value": 0.906873}, {"date": "2018-12-31", "value": 0.837405}, {"date": "2019-01-31", "value": 0.896552}, {"date": "2019-02-28", "value": 0.940277}, {"date": "2019-03-31", "value": 0.952537}, {"date": "2019-04-30", "value": 0.983893}, {"date": "2019-05-31", "value": 0.908501}, {"date": "2019-06-30", "value": 0.981416}, {"date": "2019-07-31", "value": 0.981475}, {"date": "2019-08-31", "value": 0.977166}, {"date": "2019-09-30", "value": 0.995069}, {"date": "2019-10-31", "value": 1.028696}, {"date": "2019-11-30", "value": 1.048704}, {"date": "2019-12-31", "value": 1.089055}, {"date": "2020-01-31", "value": 1.066487}, {"date": "2020-02-29", "value": 0.995666}, {"date": "2020-03-31", "value": 0.91005}, {"date": "2020-04-30", "value": 0.991704}, {"date": "2020-05-31", "value": 1.036212}, {"date": "2020-06-30", "value": 1.06786}, {"date": "2020-07-31", "value": 1.143393}, {"date": "2020-08-31", "value": 1.143664}, {"date": "2020-09-30", "value": 1.116165}, {"date": "2020-10-31", "value": 1.114041}, {"date": "2020-11-30", "value": 1.065415}, {"date": "2020-12-31", "value": 1.099091}, {"date": "2021-01-31", "value": 1.097502}, {"date": "2021-02-28", "value": 1.055472}, {"date": "2021-03-31", "value": 1.037669}, {"date": "2021-04-30", "value": 1.077374}, {"date": "2021-05-31", "value": 1.090967}, {"date": "2021-06-30", "value": 1.102916}, {"date": "2021-07-31", "value": 1.08997}, {"date": "2021-08-31", "value": 1.119364}, {"date": "2021-09-30", "value": 1.058831}, {"date": "2021-10-31", "value": 1.113852}, {"date": "2021-11-30", "value": 1.087512}, {"date": "2021-12-31", "value": 1.125183}, {"date": "2022-01-31", "value": 1.06202}, {"date": "2022-02-28", "value": 1.031722}, {"date": "2022-03-31", "value": 1.031194}, {"date": "2022-04-30", "value": 0.975731}, {"date": "2022-05-31", "value": 0.996542}, {"date": "2022-06-30", "value": 0.956781}, {"date": "2022-07-31", "value": 0.975127}, {"date": "2022-08-31", "value": 0.955316}, {"date": "2022-09-30", "value": 0.869022}, {"date": "2022-10-31", "value": 0.89387}, {"date": "2022-11-30", "value": 0.971363}, {"date": "2022-12-31", "value": 0.942368}, {"date": "2023-01-31", "value": 1.000963}, {"date": "2023-02-28", "value": 0.946869}, {"date": "2023-03-31", "value": 0.948777}, {"date": "2023-04-30", "value": 0.938106}, {"date": "2023-05-31", "value": 0.890783}, {"date": "2023-06-30", "value": 0.928118}, {"date": "2023-07-31", "value": 0.963307}, {"date": "2023-08-31", "value": 0.932541}, {"date": "2023-09-30", "value": 0.914892}, {"date": "2023-10-31", "value": 0.888708}, {"date": "2023-11-30", "value": 0.929487}, {"date": "2023-12-31", "value": 0.945022}, {"date": "2024-01-31", "value": 0.938381}, {"date": "2024-02-29", "value": 0.96013}, {"date": "2024-03-31", "value": 0.996313}, {"date": "2024-04-30", "value": 0.954862}, {"date": "2024-05-31", "value": 0.976657}, {"date": "2024-06-30", "value": 0.971809}, {"date": "2024-07-31", "value": 0.984909}, {"date": "2024-08-31", "value": 0.998217}, {"date": "2024-09-30", "value": 1.027825}, {"date": "2024-10-31", "value": 1.015616}, {"date": "2024-11-30", "value": 1.048485}, {"date": "2024-12-31", "value": 1.009287}, {"date": "2025-01-31", "value": 1.035949}, {"date": "2025-02-28", "value": 1.035601}, {"date": "2025-03-31", "value": 1.010947}, {"date": "2025-04-30", "value": 0.977822}, {"date": "2025-05-31", "value": 1.010998}, {"date": "2025-06-30", "value": 1.041216}, {"date": "2025-07-31", "value": 1.053987}, {"date": "2025-08-31", "value": 1.08542}, {"date": "2025-09-30", "value": 1.113553}, {"date": "2025-10-31", "value": 1.123148}, {"date": "2025-11-30", "value": 1.157508}, {"date": "2025-12-31", "value": 1.212873}]}, {"name": "SPY_buy_hold", "kind": "benchmark", "values": [{"date": "2018-02-28", "value": 0.96364}, {"date": "2018-03-31", "value": 0.937226}, {"date": "2018-04-30", "value": 0.94207}, {"date": "2018-05-31", "value": 0.96497}, {"date": "2018-06-30", "value": 0.97052}, {"date": "2018-07-31", "value": 1.006474}, {"date": "2018-08-31", "value": 1.038601}, {"date": "2018-09-30", "value": 1.044776}, {"date": "2018-10-31", "value": 0.972578}, {"date": "2018-11-30", "value": 0.990618}, {"date": "2018-12-31", "value": 0.903396}, {"date": "2019-01-31", "value": 0.975726}, {"date": "2019-02-28", "value": 1.007355}, {"date": "2019-03-31", "value": 1.025589}, {"date": "2019-04-30", "value": 1.067487}, {"date": "2019-05-31", "value": 0.999412}, {"date": "2019-06-30", "value": 1.068957}, {"date": "2019-07-31", "value": 1.085119}, {"date": "2019-08-31", "value": 1.066951}, {"date": "2019-09-30", "value": 1.087712}, {"date": "2019-10-31", "value": 1.111755}, {"date": "2019-11-30", "value": 1.151999}, {"date": "2019-12-31", "value": 1.185471}, {"date": "2020-01-31", "value": 1.184992}, {"date": "2020-02-29", "value": 1.091181}, {"date": "2020-03-31", "value": 0.954924}, {"date": "2020-04-30", "value": 1.076184}, {"date": "2020-05-31", "value": 1.127458}, {"date": "2020-06-30", "value": 1.147453}, {"date": "2020-07-31", "value": 1.21503}, {"date": "2020-08-31", "value": 1.299835}, {"date": "2020-09-30", "value": 1.251164}, {"date": "2020-10-31", "value": 1.219968}, {"date": "2020-11-30", "value": 1.352672}, {"date": "2020-12-31", "value": 1.402786}, {"date": "2021-01-31", "value": 1.388492}, {"date": "2021-02-28", "value": 1.427099}, {"date": "2021-03-31", "value": 1.491889}, {"date": "2021-04-30", "value": 1.570825}, {"date": "2021-05-31", "value": 1.581139}, {"date": "2021-06-30", "value": 1.6166}, {"date": "2021-07-31", "value": 1.656065}, {"date": "2021-08-31", "value": 1.70535}, {"date": "2021-09-30", "value": 1.625871}, {"date": "2021-10-31", "value": 1.739948}, {"date": "2021-11-30", "value": 1.725968}, {"date": "2021-12-31", "value": 1.80579}, {"date": "2022-01-31", "value": 1.71055}, {"date": "2022-02-28", "value": 1.66006}, {"date": "2022-03-31", "value": 1.722462}, {"date": "2022-04-30", "value": 1.571283}, {"date": "2022-05-31", "value": 1.57483}, {"date": "2022-06-30", "value": 1.444969}, {"date": "2022-07-31", "value": 1.578032}, {"date": "2022-08-31", "value": 1.513646}, {"date": "2022-09-30", "value": 1.373715}, {"date": "2022-10-31", "value": 1.485365}, {"date": "2022-11-30", "value": 1.567938}, {"date": "2022-12-31", "value": 1.477581}, {"date": "2023-01-31", "value": 1.570502}, {"date": "2023-02-28", "value": 1.531016}, {"date": "2023-03-31", "value": 1.587782}, {"date": "2023-04-30", "value": 1.613147}, {"date": "2023-05-31", "value": 1.620594}, {"date": "2023-06-30", "value": 1.725608}, {"date": "2023-07-31", "value": 1.782093}, {"date": "2023-08-31", "value": 1.75313}, {"date": "2023-09-30", "value": 1.669971}, {"date": "2023-10-31", "value": 1.633718}, {"date": "2023-11-30", "value": 1.782948}, {"date": "2023-12-31", "value": 1.86435}, {"date": "2024-01-31", "value": 1.894042}, {"date": "2024-02-29", "value": 1.992886}, {"date": "2024-03-31", "value": 2.058057}, {"date": "2024-04-30", "value": 1.975077}, {"date": "2024-05-31", "value": 2.074976}, {"date": "2024-06-30", "value": 2.148181}, {"date": "2024-07-31", "value": 2.174194}, {"date": "2024-08-31", "value": 2.224995}, {"date": "2024-09-30", "value": 2.27173}, {"date": "2024-10-31", "value": 2.251459}, {"date": "2024-11-30", "value": 2.385721}, {"date": "2024-12-31", "value": 2.32832}, {"date": "2025-01-31", "value": 2.39085}, {"date": "2025-02-28", "value": 2.360499}, {"date": "2025-03-31", "value": 2.228974}, {"date": "2025-04-30", "value": 2.209648}, {"date": "2025-05-31", "value": 2.348513}, {"date": "2025-06-30", "value": 2.469194}, {"date": "2025-07-31", "value": 2.526064}, {"date": "2025-08-31", "value": 2.577898}, {"date": "2025-09-30", "value": 2.669723}, {"date": "2025-10-31", "value": 2.733362}, {"date": "2025-11-30", "value": 2.738692}, {"date": "2025-12-31", "value": 2.740877}]}, {"name": "60/40_SPY_BND_fixed_weight", "kind": "benchmark", "values": [{"date": "2018-02-28", "value": 0.974039}, {"date": "2018-03-31", "value": 0.960908}, {"date": "2018-04-30", "value": 0.960415}, {"date": "2018-05-31", "value": 0.977044}, {"date": "2018-06-30", "value": 0.981167}, {"date": "2018-07-31", "value": 1.003018}, {"date": "2018-08-31", "value": 1.024911}, {"date": "2018-09-30", "value": 1.026398}, {"date": "2018-10-31", "value": 0.979765}, {"date": "2018-11-30", "value": 0.993162}, {"date": "2018-12-31", "value": 0.947834}, {"date": "2019-01-31", "value": 0.996017}, {"date": "2019-02-28", "value": 1.015031}, {"date": "2019-03-31", "value": 1.033916}, {"date": "2019-04-30", "value": 1.059477}, {"date": "2019-05-31", "value": 1.026678}, {"date": "2019-06-30", "value": 1.073473}, {"date": "2019-07-31", "value": 1.083751}, {"date": "2019-08-31", "value": 1.084868}, {"date": "2019-09-30", "value": 1.094779}, {"date": "2019-10-31", "value": 1.110565}, {"date": "2019-11-30", "value": 1.134501}, {"date": "2019-12-31", "value": 1.154231}, {"date": "2020-01-31", "value": 1.162727}, {"date": "2020-02-29", "value": 1.115254}, {"date": "2020-03-31", "value": 1.02828}, {"date": "2020-04-30", "value": 1.112531}, {"date": "2020-05-31", "value": 1.147311}, {"date": "2020-06-30", "value": 1.16272}, {"date": "2020-07-31", "value": 1.211192}, {"date": "2020-08-31", "value": 1.257352}, {"date": "2020-09-30", "value": 1.227769}, {"date": "2020-10-31", "value": 1.206443}, {"date": "2020-11-30", "value": 1.291039}, {"date": "2020-12-31", "value": 1.321519}, {"date": "2021-01-31", "value": 1.308822}, {"date": "2021-02-28", "value": 1.322554}, {"date": "2021-03-31", "value": 1.352645}, {"date": "2021-04-30", "value": 1.401696}, {"date": "2021-05-31", "value": 1.40808}, {"date": "2021-06-30", "value": 1.432106}, {"date": "2021-07-31", "value": 1.459855}, {"date": "2021-08-31", "value": 1.484817}, {"date": "2021-09-30", "value": 1.436872}, {"date": "2021-10-31", "value": 1.497615}, {"date": "2021-11-30", "value": 1.491617}, {"date": "2021-12-31", "value": 1.530978}, {"date": "2022-01-31", "value": 1.469436}, {"date": "2022-02-28", "value": 1.436723}, {"date": "2022-03-31", "value": 1.452895}, {"date": "2022-04-30", "value": 1.352524}, {"date": "2022-05-31", "value": 1.358844}, {"date": "2022-06-30", "value": 1.282709}, {"date": "2022-07-31", "value": 1.364209}, {"date": "2022-08-31", "value": 1.315546}, {"date": "2022-09-30", "value": 1.220777}, {"date": "2022-10-31", "value": 1.272805}, {"date": "2022-11-30", "value": 1.333923}, {"date": "2022-12-31", "value": 1.283213}, {"date": "2023-01-31", "value": 1.348331}, {"date": "2023-02-28", "value": 1.313613}, {"date": "2023-03-31", "value": 1.3569}, {"date": "2023-04-30", "value": 1.373135}, {"date": "2023-05-31", "value": 1.370547}, {"date": "2023-06-30", "value": 1.422966}, {"date": "2023-07-31", "value": 1.451172}, {"date": "2023-08-31", "value": 1.433188}, {"date": "2023-09-30", "value": 1.378261}, {"date": "2023-10-31", "value": 1.351999}, {"date": "2023-11-30", "value": 1.450657}, {"date": "2023-12-31", "value": 1.511176}, {"date": "2024-01-31", "value": 1.524964}, {"date": "2024-02-29", "value": 1.5644}, {"date": "2024-03-31", "value": 1.600995}, {"date": "2024-04-30", "value": 1.546296}, {"date": "2024-05-31", "value": 1.603616}, {"date": "2024-06-30", "value": 1.643543}, {"date": "2024-07-31", "value": 1.670698}, {"date": "2024-08-31", "value": 1.703822}, {"date": "2024-09-30", "value": 1.734295}, {"date": "2024-10-31", "value": 1.70808}, {"date": "2024-11-30", "value": 1.776495}, {"date": "2024-12-31", "value": 1.738759}, {"date": "2025-01-31", "value": 1.771282}, {"date": "2025-02-28", "value": 1.77307}, {"date": "2025-03-31", "value": 1.714694}, {"date": "2025-04-30", "value": 1.708971}, {"date": "2025-05-31", "value": 1.768801}, {"date": "2025-06-30", "value": 1.8351}, {"date": "2025-07-31", "value": 1.859659}, {"date": "2025-08-31", "value": 1.89114}, {"date": "2025-09-30", "value": 1.940017}, {"date": "2025-10-31", "value": 1.972714}, {"date": "2025-11-30", "value": 1.979735}, {"date": "2025-12-31", "value": 1.978299}]}, {"name": "EqualWeight_walk_forward", "kind": "strategy", "values": [{"date": "2018-02-28", "value": 0.971449}, {"date": "2018-03-31", "value": 0.971653}, {"date": "2018-04-30", "value": 0.965885}, {"date": "2018-05-31", "value": 0.9656}, {"date": "2018-06-30", "value": 0.94699}, {"date": "2018-07-31", "value": 0.936945}, {"date": "2018-08-31", "value": 0.91926}, {"date": "2018-09-30", "value": 0.920283}, {"date": "2018-10-31", "value": 0.905499}, {"date": "2018-11-30", "value": 0.926212}, {"date": "2018-12-31", "value": 0.877597}, {"date": "2019-01-31", "value": 0.923209}, {"date": "2019-02-28", "value": 0.940132}, {"date": "2019-03-31", "value": 0.938654}, {"date": "2019-04-30", "value": 0.941678}, {"date": "2019-05-31", "value": 0.90933}, {"date": "2019-06-30", "value": 0.942813}, {"date": "2019-07-31", "value": 0.939676}, {"date": "2019-08-31", "value": 0.923968}, {"date": "2019-09-30", "value": 0.929522}, {"date": "2019-10-31", "value": 0.946129}, {"date": "2019-11-30", "value": 0.935896}, {"date": "2019-12-31", "value": 0.970424}, {"date": "2020-01-31", "value": 0.943617}, {"date": "2020-02-29", "value": 0.907943}, {"date": "2020-03-31", "value": 0.805148}, {"date": "2020-04-30", "value": 0.830006}, {"date": "2020-05-31", "value": 0.852396}, {"date": "2020-06-30", "value": 0.877557}, {"date": "2020-07-31", "value": 0.924935}, {"date": "2020-08-31", "value": 0.969249}, {"date": "2020-09-30", "value": 0.940732}, {"date": "2020-10-31", "value": 0.949393}, {"date": "2020-11-30", "value": 1.007}, {"date": "2020-12-31", "value": 1.055307}, {"date": "2021-01-31", "value": 1.051505}, {"date": "2021-02-28", "value": 1.072755}, {"date": "2021-03-31", "value": 1.060659}, {"date": "2021-04-30", "value": 1.105834}, {"date": "2021-05-31", "value": 1.128811}, {"date": "2021-06-30", "value": 1.1541}, {"date": "2021-07-31", "value": 1.152039}, {"date": "2021-08-31", "value": 1.162741}, {"date": "2021-09-30", "value": 1.173357}, {"date": "2021-10-31", "value": 1.186536}, {"date": "2021-11-30", "value": 1.145093}, {"date": "2021-12-31", "value": 1.156856}, {"date": "2022-01-31", "value": 1.166214}, {"date": "2022-02-28", "value": 1.161621}, {"date": "2022-03-31", "value": 1.203998}, {"date": "2022-04-30", "value": 1.180212}, {"date": "2022-05-31", "value": 1.201192}, {"date": "2022-06-30", "value": 1.121293}, {"date": "2022-07-31", "value": 1.140701}, {"date": "2022-08-31", "value": 1.123807}, {"date": "2022-09-30", "value": 1.044798}, {"date": "2022-10-31", "value": 1.049587}, {"date": "2022-11-30", "value": 1.109194}, {"date": "2022-12-31", "value": 1.080509}, {"date": "2023-01-31", "value": 1.124229}, {"date": "2023-02-28", "value": 1.077439}, {"date": "2023-03-31", "value": 1.082796}, {"date": "2023-04-30", "value": 1.085044}, {"date": "2023-05-31", "value": 1.049454}, {"date": "2023-06-30", "value": 1.084997}, {"date": "2023-07-31", "value": 1.122485}, {"date": "2023-08-31", "value": 1.094611}, {"date": "2023-09-30", "value": 1.074743}, {"date": "2023-10-31", "value": 1.06598}, {"date": "2023-11-30", "value": 1.087361}, {"date": "2023-12-31", "value": 1.107407}, {"date": "2024-01-31", "value": 1.0864}, {"date": "2024-02-29", "value": 1.088252}, {"date": "2024-03-31", "value": 1.112102}, {"date": "2024-04-30", "value": 1.106862}, {"date": "2024-05-31", "value": 1.127349}, {"date": "2024-06-30", "value": 1.113826}, {"date": "2024-07-31", "value": 1.106055}, {"date": "2024-08-31", "value": 1.111801}, {"date": "2024-09-30", "value": 1.1695}, {"date": "2024-10-31", "value": 1.131972}, {"date": "2024-11-30", "value": 1.138953}, {"date": "2024-12-31", "value": 1.12528}, {"date": "2025-01-31", "value": 1.142947}, {"date": "2025-02-28", "value": 1.176235}, {"date": "2025-03-31", "value": 1.194069}, {"date": "2025-04-30", "value": 1.154985}, {"date": "2025-05-31", "value": 1.168169}, {"date": "2025-06-30", "value": 1.19634}, {"date": "2025-07-31", "value": 1.180995}, {"date": "2025-08-31", "value": 1.21869}, {"date": "2025-09-30", "value": 1.253905}, {"date": "2025-10-31", "value": 1.253885}]}, {"name": "MinVariance_walk_forward", "kind": "strategy", "values": [{"date": "2018-02-28", "value": 0.988607}, {"date": "2018-03-31", "value": 0.992047}, {"date": "2018-04-30", "value": 0.993343}, {"date": "2018-05-31", "value": 1.009514}, {"date": "2018-06-30", "value": 1.010394}, {"date": "2018-07-31", "value": 0.993554}, {"date": "2018-08-31", "value": 0.996078}, {"date": "2018-09-30", "value": 0.989891}, {"date": "2018-10-31", "value": 0.964494}, {"date": "2018-11-30", "value": 0.970719}, {"date": "2018-12-31", "value": 0.968096}, {"date": "2019-01-31", "value": 0.976988}, {"date": "2019-02-28", "value": 0.983742}, {"date": "2019-03-31", "value": 0.989433}, {"date": "2019-04-30", "value": 0.992207}, {"date": "2019-05-31", "value": 0.992559}, {"date": "2019-06-30", "value": 1.004652}, {"date": "2019-07-31", "value": 1.002762}, {"date": "2019-08-31", "value": 1.00734}, {"date": "2019-09-30", "value": 1.005879}, {"date": "2019-10-31", "value": 1.006547}, {"date": "2019-11-30", "value": 1.004121}, {"date": "2019-12-31", "value": 1.008606}, {"date": "2020-01-31", "value": 1.008574}, {"date": "2020-02-29", "value": 1.003197}, {"date": "2020-03-31", "value": 0.964514}, {"date": "2020-04-30", "value": 0.958248}, {"date": "2020-05-31", "value": 0.962311}, {"date": "2020-06-30", "value": 0.963512}, {"date": "2020-07-31", "value": 0.97768}, {"date": "2020-08-31", "value": 0.992387}, {"date": "2020-09-30", "value": 0.99498}, {"date": "2020-10-31", "value": 0.99602}, {"date": "2020-11-30", "value": 0.995885}, {"date": "2020-12-31", "value": 1.013793}, {"date": "2021-01-31", "value": 1.01855}, {"date": "2021-02-28", "value": 1.01347}, {"date": "2021-03-31", "value": 1.008076}, {"date": "2021-04-30", "value": 1.031533}, {"date": "2021-05-31", "value": 1.030293}, {"date": "2021-06-30", "value": 1.025069}, {"date": "2021-07-31", "value": 1.033445}, {"date": "2021-08-31", "value": 1.03804}, {"date": "2021-09-30", "value": 1.037735}, {"date": "2021-10-31", "value": 1.053565}, {"date": "2021-11-30", "value": 1.0458}, {"date": "2021-12-31", "value": 1.055497}, {"date": "2022-01-31", "value": 1.041093}, {"date": "2022-02-28", "value": 1.026956}, {"date": "2022-03-31", "value": 1.020619}, {"date": "2022-04-30", "value": 1.017362}, {"date": "2022-05-31", "value": 1.016659}, {"date": "2022-06-30", "value": 1.00426}, {"date": "2022-07-31", "value": 1.001514}, {"date": "2022-08-31", "value": 0.981579}, {"date": "2022-09-30", "value": 0.948659}, {"date": "2022-10-31", "value": 0.942519}, {"date": "2022-11-30", "value": 0.967907}, {"date": "2022-12-31", "value": 0.974307}, {"date": "2023-01-31", "value": 0.980244}, {"date": "2023-02-28", "value": 0.965432}, {"date": "2023-03-31", "value": 0.979936}, {"date": "2023-04-30", "value": 0.978504}, {"date": "2023-05-31", "value": 0.967599}, {"date": "2023-06-30", "value": 0.965836}, {"date": "2023-07-31", "value": 0.974086}, {"date": "2023-08-31", "value": 0.975916}, {"date": "2023-09-30", "value": 0.969683}, {"date": "2023-10-31", "value": 0.969289}, {"date": "2023-11-30", "value": 0.983664}, {"date": "2023-12-31", "value": 0.994949}, {"date": "2024-01-31", "value": 0.991787}, {"date": "2024-02-29", "value": 0.987105}, {"date": "2024-03-31", "value": 0.998562}, {"date": "2024-04-30", "value": 0.990614}, {"date": "2024-05-31", "value": 1.002094}, {"date": "2024-06-30", "value": 1.002159}, {"date": "2024-07-31", "value": 1.005485}, {"date": "2024-08-31", "value": 1.013471}, {"date": "2024-09-30", "value": 1.031636}, {"date": "2024-10-31", "value": 1.017527}, {"date": "2024-11-30", "value": 1.02056}, {"date": "2024-12-31", "value": 1.026718}, {"date": "2025-01-31", "value": 1.018851}, {"date": "2025-02-28", "value": 1.031744}, {"date": "2025-03-31", "value": 1.034533}, {"date": "2025-04-30", "value": 1.023655}, {"date": "2025-05-31", "value": 1.023768}, {"date": "2025-06-30", "value": 1.023958}, {"date": "2025-07-31", "value": 1.017911}, {"date": "2025-08-31", "value": 1.022569}, {"date": "2025-09-30", "value": 1.025144}, {"date": "2025-10-31", "value": 1.019932}]}, {"name": "MaxSharpe_walk_forward", "kind": "strategy", "values": [{"date": "2018-02-28", "value": 0.972594}, {"date": "2018-03-31", "value": 0.972933}, {"date": "2018-04-30", "value": 0.969942}, {"date": "2018-05-31", "value": 0.974295}, {"date": "2018-06-30", "value": 0.981164}, {"date": "2018-07-31", "value": 0.999204}, {"date": "2018-08-31", "value": 1.00818}, {"date": "2018-09-30", "value": 1.004517}, {"date": "2018-10-31", "value": 0.970781}, {"date": "2018-11-30", "value": 0.977162}, {"date": "2018-12-31", "value": 0.931476}, {"date": "2019-01-31", "value": 0.969109}, {"date": "2019-02-28", "value": 0.988913}, {"date": "2019-03-31", "value": 0.990479}, {"date": "2019-04-30", "value": 1.013875}, {"date": "2019-05-31", "value": 0.983271}, {"date": "2019-06-30", "value": 1.026931}, {"date": "2019-07-31", "value": 1.038564}, {"date": "2019-08-31", "value": 1.040776}, {"date": "2019-09-30", "value": 1.043693}, {"date": "2019-10-31", "value": 1.053375}, {"date": "2019-11-30", "value": 1.058966}, {"date": "2019-12-31", "value": 1.080022}, {"date": "2020-01-31", "value": 1.083067}, {"date": "2020-02-29", "value": 1.054597}, {"date": "2020-03-31", "value": 0.994494}, {"date": "2020-04-30", "value": 1.021807}, {"date": "2020-05-31", "value": 1.042434}, {"date": "2020-06-30", "value": 1.05346}, {"date": "2020-07-31", "value": 1.094288}, {"date": "2020-08-31", "value": 1.103207}, {"date": "2020-09-30", "value": 1.09204}, {"date": "2020-10-31", "value": 1.094049}, {"date": "2020-11-30", "value": 1.097603}, {"date": "2020-12-31", "value": 1.11702}, {"date": "2021-01-31", "value": 1.129083}, {"date": "2021-02-28", "value": 1.101582}, {"date": "2021-03-31", "value": 1.087402}, {"date": "2021-04-30", "value": 1.106609}, {"date": "2021-05-31", "value": 1.114052}, {"date": "2021-06-30", "value": 1.11759}, {"date": "2021-07-31", "value": 1.114817}, {"date": "2021-08-31", "value": 1.1157}, {"date": "2021-09-30", "value": 1.092717}, {"date": "2021-10-31", "value": 1.1171}, {"date": "2021-11-30", "value": 1.109053}, {"date": "2021-12-31", "value": 1.117894}, {"date": "2022-01-31", "value": 1.073227}, {"date": "2022-02-28", "value": 1.066022}, {"date": "2022-03-31", "value": 1.067376}, {"date": "2022-04-30", "value": 1.050411}, {"date": "2022-05-31", "value": 1.041147}, {"date": "2022-06-30", "value": 1.008356}, {"date": "2022-07-31", "value": 1.002061}, {"date": "2022-08-31", "value": 0.985079}, {"date": "2022-09-30", "value": 0.916128}, {"date": "2022-10-31", "value": 0.914966}, {"date": "2022-11-30", "value": 0.934984}, {"date": "2022-12-31", "value": 0.923696}, {"date": "2023-01-31", "value": 0.934213}, {"date": "2023-02-28", "value": 0.893114}, {"date": "2023-03-31", "value": 0.893123}, {"date": "2023-04-30", "value": 0.875728}, {"date": "2023-05-31", "value": 0.844689}, {"date": "2023-06-30", "value": 0.828949}, {"date": "2023-07-31", "value": 0.869049}, {"date": "2023-08-31", "value": 0.871681}, {"date": "2023-09-30", "value": 0.892775}, {"date": "2023-10-31", "value": 0.881563}, {"date": "2023-11-30", "value": 0.857421}, {"date": "2023-12-31", "value": 0.789701}, {"date": "2024-01-31", "value": 0.834589}, {"date": "2024-02-29", "value": 0.832461}, {"date": "2024-03-31", "value": 0.863762}, {"date": "2024-04-30", "value": 0.826543}, {"date": "2024-05-31", "value": 0.821607}, {"date": "2024-06-30", "value": 0.844352}, {"date": "2024-07-31", "value": 0.835028}, {"date": "2024-08-31", "value": 0.836673}, {"date": "2024-09-30", "value": 0.84668}, {"date": "2024-10-31", "value": 0.856253}, {"date": "2024-11-30", "value": 0.824062}, {"date": "2024-12-31", "value": 0.7992}, {"date": "2025-01-31", "value": 0.830535}, {"date": "2025-02-28", "value": 0.839001}, {"date": "2025-03-31", "value": 0.859069}, {"date": "2025-04-30", "value": 0.825808}, {"date": "2025-05-31", "value": 0.827267}, {"date": "2025-06-30", "value": 0.828006}, {"date": "2025-07-31", "value": 0.822036}, {"date": "2025-08-31", "value": 0.847371}, {"date": "2025-09-30", "value": 0.886867}, {"date": "2025-10-31", "value": 0.889913}]}], "events": [{"date": "2018-02-28", "type": "calendar", "turnover": 0.5, "max_abs_drift": 0.25}, {"date": "2020-08-31", "type": "category_change", "turnover": 1.0, "max_abs_drift": 0.276671}, {"date": "2021-04-30", "type": "category_change", "turnover": 1.0, "max_abs_drift": 0.29719}, {"date": "2023-07-31", "type": "category_change", "turnover": 0.75, "max_abs_drift": 0.30128}, {"date": "2025-11-30", "type": "category_change", "turnover": 0.766066, "max_abs_drift": 0.255195}]}</script>
+  <script>
+    const button = document.querySelector('[data-copy-command]');
+    const commandNode = document.querySelector('#run-command');
+    if (button && commandNode && navigator.clipboard) {
+      button.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(commandNode.textContent.trim());
+        button.textContent = 'Comando copiado';
+        window.setTimeout(() => { button.textContent = 'Copiar comando'; }, 1800);
+      });
+    }
+
+    const chartDataNode = document.querySelector('#front-chart-data');
+    const chartSvg = document.querySelector('#strategy-chart');
+    const toggles = document.querySelector('#strategy-toggles');
+    const tooltip = document.querySelector('#chart-tooltip');
+    const palette = ['#2563eb', '#059669', '#dc2626', '#7c3aed', '#ea580c', '#0891b2', '#4f46e5', '#16a34a'];
+    const chartData = chartDataNode ? JSON.parse(chartDataNode.textContent) : { series: [], events: [] };
+    const active = new Set(chartData.series.map((series) => series.name));
+
+    function labelFor(name) {
+      return name.replace(/_/g, ' ').replace('walk forward', 'WF');
+    }
+
+    function drawToggles() {
+      if (!toggles) return;
+      toggles.innerHTML = '';
+      chartData.series.forEach((series, index) => {
+        const label = document.createElement('label');
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = active.has(series.name);
+        input.addEventListener('change', () => {
+          if (input.checked) active.add(series.name); else active.delete(series.name);
+          drawChart();
+        });
+        const color = document.createElement('span');
+        color.style.inlineSize = '10px';
+        color.style.blockSize = '10px';
+        color.style.borderRadius = '999px';
+        color.style.background = palette[index % palette.length];
+        label.append(input, color, document.createTextNode(labelFor(series.name)));
+        toggles.append(label);
+      });
+    }
+
+    function drawChart() {
+      if (!chartSvg) return;
+      const visible = chartData.series.filter((series) => active.has(series.name));
+      if (!visible.length) {
+        chartSvg.innerHTML = '<text x="24" y="60" fill="currentColor">Select at least one strategy or benchmark.</text>';
+        return;
+      }
+      const width = chartSvg.clientWidth || 960;
+      const height = chartSvg.clientHeight || 380;
+      const pad = { top: 24, right: 28, bottom: 42, left: 54 };
+      const allPoints = visible.flatMap((series) => series.values.map((point) => ({ ...point, dateMs: Date.parse(point.date) })));
+      const minDate = Math.min(...allPoints.map((point) => point.dateMs));
+      const maxDate = Math.max(...allPoints.map((point) => point.dateMs));
+      const minValue = Math.min(...allPoints.map((point) => point.value));
+      const maxValue = Math.max(...allPoints.map((point) => point.value));
+      const x = (dateMs) => pad.left + ((dateMs - minDate) / Math.max(1, maxDate - minDate)) * (width - pad.left - pad.right);
+      const y = (value) => height - pad.bottom - ((value - minValue) / Math.max(0.000001, maxValue - minValue)) * (height - pad.top - pad.bottom);
+      const parts = [];
+      parts.push(`<svg viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`);
+      parts.push(`<line x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}" stroke="currentColor" opacity="0.22"/>`);
+      parts.push(`<line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}" stroke="currentColor" opacity="0.22"/>`);
+      [0, .25, .5, .75, 1].forEach((tick) => {
+        const value = minValue + (maxValue - minValue) * tick;
+        const yy = y(value);
+        parts.push(`<line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}" stroke="currentColor" opacity="0.08"/>`);
+        parts.push(`<text x="${pad.left - 10}" y="${yy + 4}" text-anchor="end" fill="currentColor" opacity="0.62" font-size="11">${value.toFixed(2)}x</text>`);
+      });
+      visible.forEach((series) => {
+        const index = chartData.series.findIndex((item) => item.name === series.name);
+        const color = palette[index % palette.length];
+        const d = series.values.map((point, pointIndex) => `${pointIndex === 0 ? 'M' : 'L'} ${x(Date.parse(point.date)).toFixed(2)} ${y(point.value).toFixed(2)}`).join(' ');
+        parts.push(`<path d="${d}" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`);
+        chartData.events.forEach((event) => {
+          const point = series.values.reduce((best, item) => Math.abs(Date.parse(item.date) - Date.parse(event.date)) < Math.abs(Date.parse(best.date) - Date.parse(event.date)) ? item : best, series.values[0]);
+          const cx = x(Date.parse(point.date));
+          const cy = y(point.value);
+          parts.push(`<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="4.6" fill="${color}" stroke="var(--surface-raised)" stroke-width="2" data-name="${series.name}" data-date="${event.date}" data-type="${event.type}" data-value="${point.value}" data-turnover="${event.turnover}"/>`);
+        });
+      });
+      const start = new Date(minDate).getFullYear();
+      const end = new Date(maxDate).getFullYear();
+      parts.push(`<text x="${pad.left}" y="${height - 12}" fill="currentColor" opacity="0.62" font-size="11">${start}</text>`);
+      parts.push(`<text x="${width - pad.right}" y="${height - 12}" text-anchor="end" fill="currentColor" opacity="0.62" font-size="11">${end}</text>`);
+      parts.push('</svg>');
+      chartSvg.innerHTML = parts.join('');
+      chartSvg.querySelectorAll('circle').forEach((circle) => {
+        circle.addEventListener('mouseenter', (event) => {
+          tooltip.style.opacity = '1';
+          tooltip.textContent = `${labelFor(circle.dataset.name)} · ${circle.dataset.date} · ${circle.dataset.type} · equity ${Number(circle.dataset.value).toFixed(2)}x · turnover ${Number(circle.dataset.turnover).toFixed(2)}`;
+          const rect = chartSvg.getBoundingClientRect();
+          tooltip.style.left = `${event.clientX - rect.left}px`;
+          tooltip.style.top = `${event.clientY - rect.top}px`;
+        });
+        circle.addEventListener('mouseleave', () => { tooltip.style.opacity = '0'; });
+      });
+    }
+
+    drawToggles();
+    drawChart();
+    window.addEventListener('resize', drawChart);
+  </script>
+</body>
+</html>

@@ -1,8 +1,11 @@
 # Data Sources for ETF Universe
 
 **Date:** 2026-05-18  
+**Updated:** 2026-05-20  
 **Project:** portfolio-etf-optimizer  
 **Purpose:** Document source selection for building a broad historical ETF universe with survivorship-bias awareness.
+
+> Detailed point-in-time source matrix and implementation roadmap: `docs/research/etf_point_in_time_data_sources.md`.
 
 ## Source comparison table
 

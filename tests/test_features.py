@@ -10,6 +10,7 @@ from etf_optimizer.features import (
     sharpe_ratio,
     sortino_ratio,
     compute_feature_table,
+    tracking_error,
 )
 
 
@@ -39,6 +40,34 @@ def test_compute_feature_table_creates_expected_columns():
         {"AAA": [1000, 1200, 1100, 1300, 1250], "BBB": [500, 450, 600, 550, 700]},
         index=prices.index,
     )
-    table = compute_feature_table(prices, volume=volume, periods_per_year=252)
-    assert set(["cagr", "volatility", "sharpe", "sortino", "max_drawdown", "avg_dollar_volume"]).issubset(table.columns)
+    benchmark = pd.Series([0.001, 0.002, -0.001, 0.003], index=prices.index[1:])
+    table = compute_feature_table(
+        prices,
+        volume=volume,
+        benchmark_returns=benchmark,
+        expense_ratios={"AAA": 0.0003, "BBB": 0.0010},
+        periods_per_year=252,
+    )
+    assert set(
+        [
+            "cagr",
+            "volatility",
+            "sharpe",
+            "sortino",
+            "max_drawdown",
+            "avg_dollar_volume",
+            "liquidity",
+            "tracking_error",
+            "expense_ratio",
+        ]
+    ).issubset(table.columns)
     assert list(table.index) == ["AAA", "BBB"]
+    assert table.loc["AAA", "liquidity"] == table.loc["AAA", "avg_dollar_volume"]
+    assert table.loc["AAA", "expense_ratio"] == 0.0003
+
+
+def test_tracking_error_is_annualized_active_return_volatility():
+    returns = pd.Series([0.02, 0.01, -0.01, 0.03])
+    benchmark = pd.Series([0.01, 0.00, 0.00, 0.02])
+    expected = ((returns - benchmark).std(ddof=1)) * np.sqrt(4)
+    assert np.isclose(tracking_error(returns, benchmark, periods_per_year=4), expected)

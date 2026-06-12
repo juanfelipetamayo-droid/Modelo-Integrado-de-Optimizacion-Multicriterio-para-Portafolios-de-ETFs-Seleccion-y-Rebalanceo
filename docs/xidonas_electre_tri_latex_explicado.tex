@@ -1,0 +1,422 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish, es-tabla]{babel}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{amsmath, amssymb}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, calc}
+
+\geometry{margin=2.3cm}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=blue, citecolor=black}
+\setlength{\parskip}{0.55em}
+\setlength{\parindent}{0pt}
+\renewcommand{\arraystretch}{1.16}
+
+\title{Metodología multicriterio para selección de acciones usando análisis financiero\\
+\large Versión en \LaTeX{} explicada, con lectura de figuras y tablas}
+\author{Basado en Xidonas, Mavrotas y Psarras (2009)}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Este documento convierte el contenido central del artículo \textit{A multicriteria methodology for equity selection using financial analysis} en una versión de estudio en \LaTeX{}. La redacción está adaptada al español y prioriza la explicación metodológica: problema de selección de acciones, uso de análisis financiero, método ELECTRE Tri, definición de clases sectoriales, criterios, ponderaciones, reglas de asignación y validación empírica. Las figuras y tablas del artículo original se explican como elementos visuales de apoyo, evitando tratarlas como simples imágenes sin interpretación.
+\end{abstract}
+
+\section{Objetivo del artículo}
+
+El artículo propone una metodología de decisión multicriterio para apoyar la selección de acciones. La idea central es evaluar la fortaleza financiera de las empresas emisoras mediante razones financieras y, con base en esa evaluación, clasificar sus acciones como alternativas atractivas o no atractivas para un portafolio de inversión de horizonte medio-largo.
+
+El enfoque se concentra en la primera fase del proceso de inversión: seleccionar un conjunto reducido de acciones candidatas. La construcción final del portafolio, es decir, decidir cuánto capital asignar a cada acción, queda como una fase posterior.
+
+\section{Problema de decisión}
+
+La selección de acciones no depende únicamente del binomio retorno-riesgo. También intervienen criterios de rentabilidad, liquidez, actividad, solvencia, estructura financiera y particularidades contables del sector. Por eso, el problema se modela como un problema de decisión multicriterio, donde cada empresa es una alternativa y cada razón financiera es un criterio de evaluación.
+
+Formalmente, se tiene un conjunto de alternativas:
+\[
+A=\{a_1,a_2,\ldots,a_n\},
+\]
+que representan empresas cuyas acciones cotizan en bolsa, y un conjunto de criterios:
+\[
+G=\{g_1,g_2,\ldots,g_m\},
+\]
+que representan razones financieras relevantes. Cada alternativa se evalúa con respecto a cada criterio, y luego se asigna a una categoría de calidad financiera.
+
+\section{Por qué usar análisis financiero}
+
+El análisis financiero se usa como insumo para inferir la salud corporativa de la firma. Una acción se considera más atractiva cuando la empresa emisora muestra desempeño sólido en dimensiones como:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Rentabilidad}: capacidad de generar utilidad sobre activos, patrimonio o ventas.
+    \item \textbf{Actividad}: eficiencia operativa, rotación de activos y gestión de cuentas por cobrar o pagar.
+    \item \textbf{Liquidez}: capacidad de cubrir obligaciones de corto plazo.
+    \item \textbf{Solvencia y estructura}: nivel de endeudamiento, apalancamiento y cobertura de gastos financieros.
+\end{itemize}
+
+La tesis metodológica es que una empresa financieramente fuerte debería tener mejores perspectivas como inversión, aunque el artículo reconoce que esta relación no es mecánica ni perfecta.
+
+\section{Estructura general de la metodología}
+
+El artículo usa ELECTRE Tri, un método de sobreclasificación para asignar alternativas a categorías predefinidas. La metodología sigue estos pasos:
+
+\begin{enumerate}[leftmargin=*]
+    \item Clasificar las empresas por industria o supersector.
+    \item Definir un conjunto de criterios financieros adecuado para cada tipo de empresa.
+    \item Calcular pesos de criterios mediante el método \textit{resistance to change grid}.
+    \item Definir categorías de decisión y perfiles de referencia.
+    \item Aplicar ELECTRE Tri dentro de cada clase sectorial.
+    \item Comparar asignaciones pesimistas y optimistas.
+    \item Seleccionar solo acciones clasificadas como financieramente excelentes de forma consistente.
+    \item Validar los resultados con expertos y con medidas posteriores de retorno y riesgo.
+\end{enumerate}
+
+\subsection{Explicación de la figura metodológica}
+
+El artículo contiene una figura central: el diagrama lógico de la metodología. En vez de verlo como una simple gráfica, debe leerse como el flujo completo de decisión. El proceso empieza con las acciones candidatas, pasa por una clasificación sectorial basada en estándares ICB, aplica ELECTRE Tri con criterios, categorías, perfiles, umbrales y pesos, obtiene resultados por clase, integra las asignaciones y termina en una lista de acciones propuestas. Además, los expertos intervienen en varios puntos: definición de clases, construcción de criterios, calibración de parámetros y validación final.
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[
+    node distance=8mm,
+    block/.style={draw, rounded corners, align=center, minimum width=4.0cm, minimum height=8mm, font=\small},
+    smallblock/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=8mm, font=\scriptsize},
+    decision/.style={draw, diamond, aspect=2.1, align=center, font=\small, inner sep=1pt},
+    data/.style={draw, trapezium, trapezium left angle=70, trapezium right angle=110, align=center, minimum width=3.4cm, font=\small},
+    arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[block] (start) {Acciones\\candidatas};
+\node[block, below=of start] (classes) {Definición de clases\\sectoriales};
+\node[decision, below=of classes] (electre) {ELECTRE Tri};
+\node[block, below=13mm of electre] (params) {Modelo de decisión\\por clase};
+\node[smallblock, below left=8mm and -2mm of params] (criteria) {Criterios\\financieros};
+\node[smallblock, below right=8mm and -2mm of params] (weights) {Pesos, perfiles\\y umbrales};
+\node[block, below=24mm of params] (results) {Resultados\\por clase};
+\node[decision, below=of results] (integration) {Integración de\\asignaciones};
+\node[block, below=of integration] (final) {Acciones propuestas\\para selección};
+
+\node[data, left=18mm of classes] (icb) {Estándares ICB};
+\node[data, left=22mm of params] (db) {Base de datos\\financiera};
+\node[block, right=20mm of params] (experts) {Expertos};
+\node[block, right=20mm of integration] (validation) {Validación\\de resultados};
+\node[block, left=18mm of integration] (sensitivity) {Análisis de\\sensibilidad};
+
+\draw[arrow] (start) -- (classes);
+\draw[arrow] (classes) -- (electre);
+\draw[arrow] (electre) -- (params);
+\draw[arrow] (params) -- (criteria);
+\draw[arrow] (params) -- (weights);
+\draw[arrow] (criteria) |- (results);
+\draw[arrow] (weights) |- (results);
+\draw[arrow] (results) -- (integration);
+\draw[arrow] (integration) -- (final);
+\draw[arrow] (icb) -- (classes);
+\draw[arrow] (db) -- (params);
+\draw[arrow, dashed] (experts) -- (classes);
+\draw[arrow, dashed] (experts) -- (params);
+\draw[arrow, dashed] (experts) -- (validation);
+\draw[arrow, dashed] (validation) -- (final);
+\draw[arrow, dashed] (sensitivity) -- (integration);
+
+\end{tikzpicture}
+\caption{Lectura explicada del diagrama lógico: la metodología no compara todas las empresas como si fueran homogéneas, sino que primero las separa por sector, aplica ELECTRE Tri con parámetros sectoriales y luego integra solo las asignaciones robustas.}
+\label{fig:metodologia}
+\end{figure}
+
+\section{Clases sectoriales}
+
+Una característica clave es que la metodología no produce un ranking único para todo el mercado. Las empresas se separan por actividad para evitar comparaciones injustas, por ejemplo, comparar un banco con una empresa de alimentos. La Tabla~\ref{tab:clases} resume las ocho clases usadas.
+
+\begin{table}[h!]
+\centering
+\caption{Clases sectoriales usadas para aplicar ELECTRE Tri por separado.}
+\label{tab:clases}
+\begin{tabular}{p{0.08\linewidth}p{0.28\linewidth}p{0.54\linewidth}}
+\toprule
+Clase & Industria principal & Supersectores incluidos \\
+\midrule
+a & Bienes de consumo & Alimentos, bebidas, bienes personales y del hogar \\
+b & Industriales & Construcción, materiales, bienes y servicios industriales \\
+c & Tecnología / telecomunicaciones & Tecnología y telecomunicaciones \\
+d & Materiales básicos / petróleo y gas & Químicos, recursos básicos, petróleo y gas \\
+e & Servicios de consumo / servicios públicos / salud & Retail, medios, ocio, utilities y salud \\
+f & Financieras & Servicios financieros \\
+g & Financieras & Bancos \\
+h & Financieras & Seguros \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Lectura de la tabla:} esta tabla no es un resultado estadístico, sino una decisión de diseño. Su función es impedir comparaciones contables no equivalentes. El método se ejecuta dentro de cada clase y no entre clases.
+
+\section{Criterios financieros}
+
+El artículo construye cuatro conjuntos de criterios, porque no todas las firmas siguen la misma lógica contable. Las empresas industriales o comerciales se evalúan con razones distintas a las de bancos, aseguradoras o firmas de servicios financieros.
+
+\begin{longtable}{p{0.21\linewidth}p{0.55\linewidth}p{0.16\linewidth}}
+\caption{Resumen de conjuntos de criterios financieros.}\label{tab:criterios}\\
+\toprule
+Tipo de empresa & Criterios principales & Dirección esperada \\
+\midrule
+\endfirsthead
+\toprule
+Tipo de empresa & Criterios principales & Dirección esperada \\
+\midrule
+\endhead
+Industria y comercio & Retorno sobre activos, retorno sobre patrimonio, margen neto, plazo de cobro, plazo de pago, rotación de activos, liquidez ácida, liquidez de caja, pasivos corrientes sobre capital de trabajo, solvencia, apalancamiento y cobertura de gastos financieros. & Algunos se maximizan y otros se minimizan. \\
+Servicios financieros & Retorno sobre activos, retorno sobre patrimonio, margen neto, desempeño por empleado, rotación de activos, liquidez ácida, solvencia y apalancamiento. & Predomina maximización, salvo solvencia. \\
+Bancos & Retorno sobre activos, retorno sobre patrimonio, spread de activos/pasivos con interés, margen neto de interés, eficiencia, desempeño por empleado, patrimonio sobre activos, activos con interés sobre activos, préstamos sobre depósitos y provisiones sobre préstamos. & Predomina maximización, con criterios de estructura a minimizar. \\
+Seguros & Retorno sobre activos, retorno sobre patrimonio, margen neto, desempeño por empleado, plazo de cobro, liquidez ácida, solvencia y provisiones de seguros sobre pasivos. & Mezcla de maximización y minimización. \\
+\bottomrule
+\end{longtable}
+
+\textbf{Lectura de las tablas de criterios:} las tablas de criterios indican qué mide cada razón financiera, su unidad y si un valor alto o bajo es preferible. No deben interpretarse como resultados; son la arquitectura de evaluación que alimenta ELECTRE Tri.
+
+\section{Método ELECTRE Tri}
+
+\subsection{Idea general}
+
+ELECTRE Tri es un método de clasificación ordinal. En lugar de ordenar todas las acciones de mejor a peor, asigna cada acción a una categoría predefinida comparándola contra perfiles de referencia. La relación de sobreclasificación se denota como:
+\[
+a S b_h,
+\]
+lo que significa: ``la alternativa $a$ es al menos tan buena como el perfil de referencia $b_h$''.
+
+\subsection{Concordancia}
+
+Para aceptar que $a$ sobreclasifica a $b_h$, debe existir una mayoría suficiente de criterios que apoye esa afirmación. Para cada criterio $j$, se calcula un índice de concordancia parcial:
+
+\[
+c_j(a,b_h)=
+\begin{cases}
+0, & \text{si } g_j(b_h)-g_j(a) \geq p_j(b_h),\\[4pt]
+1, & \text{si } g_j(b_h)-g_j(a) \leq q_j(b_h),\\[4pt]
+\dfrac{p_j(b_h)+g_j(a)-g_j(b_h)}{p_j(b_h)-q_j(b_h)}, & \text{en otro caso.}
+\end{cases}
+\]
+
+Donde:
+\begin{itemize}[leftmargin=*]
+    \item $q_j(b_h)$ es el umbral de indiferencia.
+    \item $p_j(b_h)$ es el umbral de preferencia.
+    \item $g_j(a)$ es el valor de la alternativa $a$ en el criterio $j$.
+\end{itemize}
+
+Luego se calcula la concordancia global:
+\[
+c(a,b_h)=\frac{\sum_{j \in F} k_j c_j(a,b_h)}{\sum_{j \in F} k_j},
+\]
+con $k_j$ como peso del criterio $j$.
+
+\subsection{Discordancia y veto}
+
+Aunque una mayoría de criterios apoye la sobreclasificación, un criterio en contra puede vetarla si la diferencia es demasiado fuerte. El índice de discordancia $d_j(a,b_h)$ representa esa oposición. Cuando la discordancia supera la concordancia, reduce la credibilidad de la afirmación.
+
+La credibilidad de la sobreclasificación se calcula como:
+\[
+\sigma(a,b_h)=c(a,b_h)\prod_{j\in \bar{F}}\frac{1-d_j(a,b_h)}{1-c(a,b_h)},
+\]
+con:
+\[
+\bar{F}=\{j\in F: d_j(a,b_h)>c(a,b_h)\}.
+\]
+
+La afirmación $aSb_h$ se acepta si:
+\[
+\sigma(a,b_h)\geq \lambda,
+\]
+siendo $\lambda$ un umbral de corte entre $0.5$ y $1$.
+
+\subsection{Asignación pesimista y optimista}
+
+El método produce dos procedimientos de asignación:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Asignación pesimista}: compara desde las mejores categorías hacia las peores. Es más conservadora.
+    \item \textbf{Asignación optimista}: compara desde las peores categorías hacia las mejores. Es menos restrictiva.
+\end{itemize}
+
+La metodología solo propone una acción cuando ambas asignaciones son coherentes y ubican a la firma en la categoría superior $C_3$ durante al menos dos de los tres años estudiados.
+
+\section{Categorías de decisión}
+
+\begin{table}[h!]
+\centering
+\caption{Categorías usadas por ELECTRE Tri.}
+\label{tab:categorias}
+\begin{tabular}{p{0.12\linewidth}p{0.78\linewidth}}
+\toprule
+Categoría & Interpretación \\
+\midrule
+$C_3$ & Empresas con fortaleza financiera excelente. Sus acciones pueden proponerse para portafolios de horizonte medio-largo. \\
+$C_2$ & Empresas con fortaleza financiera media. No se proponen directamente; requieren análisis adicional. \\
+$C_1$ & Empresas con desempeño financiero débil. No se consideran una opción racional para inversión prudente en el periodo estudiado. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Lectura de la tabla:} las categorías no son calificaciones subjetivas aisladas. Son clases de decisión derivadas de criterios financieros, pesos, umbrales y perfiles de referencia.
+
+\section{Regla final de selección}
+
+La regla de selección es deliberadamente estricta. Una acción se recomienda solo si cumple las siguientes condiciones:
+
+\begin{enumerate}[leftmargin=*]
+    \item La empresa pertenece a una clase sectorial específica.
+    \item ELECTRE Tri la asigna a $C_3$ tanto por el procedimiento optimista como por el pesimista.
+    \item La clasificación en $C_3$ se repite en al menos dos de los tres años analizados.
+\end{enumerate}
+
+Esto permite descartar empresas con resultados ambiguos, inconsistentes o dependientes de una sola medición anual.
+
+\section{Aplicación empírica}
+
+La metodología se aplicó a empresas listadas en la Bolsa de Atenas. El estudio consideró 259 firmas después de excluir valores con características especiales, suspensión, supervisión o acciones preferentes. El periodo de análisis financiero fue 2004--2006.
+
+\begin{table}[h!]
+\centering
+\caption{Distribución de firmas por clase en la aplicación empírica.}
+\label{tab:distribucion}
+\begin{tabular}{lrr}
+\toprule
+Clase & Número de empresas & Descripción resumida \\
+\midrule
+a & 64 & Bienes de consumo \\
+b & 54 & Industriales \\
+c & 25 & Tecnología y telecomunicaciones \\
+d & 28 & Materiales básicos, petróleo y gas \\
+e & 49 & Servicios de consumo, utilities y salud \\
+f & 20 & Servicios financieros \\
+g & 14 & Bancos \\
+h & 5 & Seguros \\
+\midrule
+Total & 259 & Muestra de acciones evaluadas \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Lectura de la tabla:} esta tabla explica el tamaño de la muestra por clase. Es importante porque la comparación se hace dentro de cada grupo; una clase con más firmas no necesariamente tiene más oportunidades, sino más alternativas evaluadas.
+
+\section{Resultados finales}
+
+Después de aplicar el procedimiento por clase y exigir consistencia temporal, se seleccionaron 100 acciones. La Tabla~\ref{tab:resultados} resume los códigos propuestos por clase.
+
+\begin{longtable}{p{0.13\linewidth}p{0.78\linewidth}}
+\caption{Acciones propuestas para selección por clase.}\label{tab:resultados}\\
+\toprule
+Clase & Códigos propuestos \\
+\midrule
+\endfirsthead
+\toprule
+Clase & Códigos propuestos \\
+\midrule
+\endhead
+a & VIVART, VOX, GALAX, GRIGO, DROME, EEEK, ELMEK, EFTZI, INFIS, KANAK, KARD, KATSK, KEGO, KORRES, KRI, MIN, MPELA, NHR, SAR, SATOK, SENTR, YALKO, FIER, FRLK, HATZK \\
+b & VOSYS, GEVKA, EKTER, ELTK, HERAC, KLEM, KLM, LYK, MEVA, METK, NIOUS, OLTH, OLP, PETRO, TERNA, TITK, FLEXO, FRIGO \\
+c & AGRI, BYTE, KOSMO, KOUES, PLAIS, REIN \\
+d & ALMY, DROUK, ELPE, MERKO, MOH, MYTIL, NEOXH, SIDE, SIDMA, HAKOR \\
+e & AVK, ANEK, ARAIG, ASKO, VSTAR, EYAPS, HLEAT, HYATT, IASO, INLOT, KAE, LAMPSA, MOTO, OPAP, OTOEL, REV, SPRI, SFA \\
+f & AIOLK, ALTI, ANDRO, ASTAK, GEK, GNEF, DIAS, EUPRO, EHAE, INTER, KOUM, PEA, SIENS \\
+g & ALFA, ATE, ETE, EUROB, KYPR, PEIR, TT \\
+h & AGRAS, EURBK, EUPIK \\
+\bottomrule
+\end{longtable}
+
+\textbf{Lectura de la tabla:} esta no es una recomendación universal de inversión. Es el resultado del filtro metodológico para el periodo y mercado estudiados. La lista representa empresas que tuvieron fortaleza financiera superior dentro de su clase y consistencia temporal suficiente.
+
+\section{Validación de resultados}
+
+Los autores validan el resultado de dos formas:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Validación cualitativa}: expertos financieros revisan si las acciones propuestas coinciden con su conocimiento práctico del mercado.
+    \item \textbf{Validación cuantitativa}: se revisa el comportamiento posterior de retorno y riesgo usando precios semanales entre abril de 2007 y marzo de 2008.
+\end{itemize}
+
+Las medidas usadas son:
+\[
+\bar{r}=\frac{\sum_{t=1}^{n} r_t}{n},
+\]
+\[
+r_t=\frac{p_t-p_{t-1}+d_t}{p_{t-1}},
+\]
+\[
+\sigma=\sqrt{\frac{\sum_{t=1}^{n}(r_t-\bar{r})^2}{n}}.
+\]
+
+Donde $p_t$ es el precio al final del periodo $t$, $p_{t-1}$ es el precio del periodo anterior y $d_t$ es el dividendo del periodo.
+
+\begin{table}[h!]
+\centering
+\caption{Estadísticas de validación por clase.}
+\label{tab:validacion}
+\begin{tabular}{lrrrr}
+\toprule
+Clase & Acciones con retorno superior & \% & Acciones con riesgo inferior & \% \\
+\midrule
+a & 13 & 52.0 & 22 & 88.0 \\
+b & 13 & 72.2 & 12 & 66.7 \\
+c & 4 & 66.7 & 5 & 83.3 \\
+d & 6 & 60.0 & 7 & 70.0 \\
+e & 10 & 55.6 & 12 & 66.7 \\
+f & 7 & 53.8 & 11 & 84.6 \\
+g & 4 & 57.1 & 3 & 42.9 \\
+h & 2 & 66.7 & 2 & 66.7 \\
+\midrule
+Total & 59 & 59.0 & 74 & 74.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Lectura de la tabla de validación:} el 59\% de las acciones seleccionadas obtuvo retorno superior al promedio de su clase, y el 74\% tuvo desviación estándar inferior al promedio de su clase. El hallazgo más fuerte no está solo en retorno, sino en menor riesgo relativo, especialmente en las clases a, c y f.
+
+\section{Explicación consolidada de figuras y tablas}
+
+\begin{longtable}{p{0.20\linewidth}p{0.70\linewidth}}
+\caption{Guía de lectura de los elementos visuales del artículo.}\label{tab:lectura-graficas}\\
+\toprule
+Elemento visual & Qué representa y cómo leerlo \\
+\midrule
+\endfirsthead
+\toprule
+Elemento visual & Qué representa y cómo leerlo \\
+\midrule
+\endhead
+Figura 1 & Es el flujo completo de la metodología: entrada de acciones, clasificación sectorial, aplicación de ELECTRE Tri, parametrización con criterios-pesos-umbrales, resultados por clase, integración, validación y sensibilidad. No muestra datos numéricos; muestra arquitectura de decisión. \\
+Tablas 1--2 & Son mapas de literatura. Organizan estudios previos de MCDM y sistemas de soporte de decisión aplicados a evaluación corporativa. Sirven para justificar la elección metodológica. \\
+Tablas 3 y 15 & Explican la segmentación de empresas por clase, industria y supersector. La Tabla 15 agrega cantidad de firmas por grupo. \\
+Tablas 4--7 & Definen los criterios financieros por tipo de firma. Son la base de medición: indican qué ratios se usan, qué significan y si se maximizan o minimizan. \\
+Tablas 8--11 & Presentan los pesos de los criterios. La Tabla 8 muestra el procedimiento de comparación por resistencia al cambio; las Tablas 9--11 resumen pesos para otros tipos de firmas. \\
+Tablas 12--13 & Definen categorías y reglas de interpretación. Indican cuándo una acción se propone, se descarta o requiere estudio adicional. \\
+Tabla 14 & Muestra perfiles y umbrales para una clase y año específico. Es una tabla de calibración, no una tabla de resultados finales. \\
+Tablas 16--17 & Presentan datos de entrada: firmas, sectores y matriz de desempeño financiero. Son la materia prima del modelo. \\
+Tablas 18--21 & Muestran un ejemplo de salida para la clase a. Explican cómo se pasa de asignaciones anuales a una lista consistente en el tiempo. \\
+Tabla 22 & Es la salida principal: lista final de 100 acciones propuestas por clase. \\
+Tablas 23--25 & Son tablas de validación. Comparan retorno promedio y desviación estándar de la muestra total contra las acciones seleccionadas. Ayudan a evaluar si el filtro financiero tuvo capacidad predictiva razonable. \\
+\bottomrule
+\end{longtable}
+
+\section{Conclusiones metodológicas}
+
+La contribución central del artículo es combinar análisis financiero con una metodología multicriterio de clasificación. Su principal fortaleza es que evita un ranking único e indiferenciado de acciones. En cambio, reconoce que la evaluación debe ser sectorial, porque los ratios relevantes y su interpretación cambian entre industria, bancos, seguros y servicios financieros.
+
+La metodología también es conservadora: una acción no se propone por un buen resultado aislado, sino por consistencia en dos asignaciones ELECTRE Tri y en al menos dos de tres años. Esto reduce el riesgo de seleccionar empresas con señales financieras ocasionales o ambiguas.
+
+Como limitación, el método depende de la calidad de los datos contables, la calibración de pesos, perfiles y umbrales, y la participación de expertos. Además, aunque la validación posterior es positiva, no demuestra causalidad perfecta entre fortaleza financiera y rentabilidad bursátil futura.
+
+\begin{thebibliography}{9}
+\bibitem{Xidonas2009}
+Xidonas, P., Mavrotas, G., \& Psarras, J. (2009). \textit{A multicriteria methodology for equity selection using financial analysis}. Computers \& Operations Research, 36(12), 3187--3203.
+\end{thebibliography}
+
+\end{document}

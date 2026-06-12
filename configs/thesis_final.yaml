@@ -1,0 +1,57 @@
+# GOAL 13 — Backtest final thesis-grade/frozen
+# One-command entrypoint:
+#   python main.py --config configs/thesis_final.yaml
+
+output_dir: results/thesis_final
+smoke_test: false
+
+period:
+  start: "2015-01-01"
+  end: "2025-12-31"
+rebalance: quarterly
+lookback_months: 36
+minimum_oos_months: 60
+cost_bps: 10.0
+weight_drift: buy_and_hold
+rebalance_policy: calendar
+turnover_included: true
+
+universe_mode: public_approximate_pit
+investable_universe_dir: data/universe_master/investable_universe/investable_universe_snapshots
+prices_path: data/raw/yfinance_pilot_2015_2025/close.parquet
+volume_path: data/raw/yfinance_pilot_2015_2025/volume.parquet
+min_coverage_pct: 0.80
+min_avg_dollar_volume: 0.0
+
+models_final:
+  - SPY_buy_hold
+  - 60/40_SPY_AGG_fixed_weight
+  - Universe_EqualWeight_walk_forward
+  - Universe_MinVariance_walk_forward
+  - ELECTRE_EqualWeight_walk_forward
+  - ELECTRE_MinVariance_walk_forward
+  - ELECTRE_InverseVol_walk_forward
+  - FlowSort_EqualWeight_walk_forward
+  - FlowSort_MinVariance_walk_forward
+  - FlowSort_InverseVol_walk_forward
+experimental_models:
+  - ELECTRE_MaxSharpe_walk_forward
+
+claim_boundaries:
+  public_data: "public_approximate_pit reduces static-universe bias but is not institutional survivorship-bias-free."
+  max_sharpe: "MaxSharpe is reported only as experimental."
+
+# GOAL 14 — statistical inference / robustness
+statistical_benchmark: SPY_buy_hold
+statistical_n_bootstrap: 1000
+statistical_block_length: 3
+run_parameter_sensitivity: true
+cap_sensitivity_grid:
+  - null
+  - 0.25
+  - 0.35
+  - 0.50
+rebalance_sensitivity_grid:
+  - monthly
+  - quarterly
+  - annual

@@ -12,8 +12,16 @@ dependencies = [
   "scikit-learn>=1.4",
   "yfinance>=0.2.40",
   "requests>=2.31",
+  "PyYAML>=6.0",
   "pyarrow>=15.0",
+  "streamlit>=1.57.0",
+  "pydecision>=5.1.1",
+  "python-docx>=1.2.0",
+  "python-pptx>=1.0.2",
 ]
+
+[project.scripts]
+etf-optimizer-dashboard = "etf_optimizer.dashboard.cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.5"]

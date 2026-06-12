@@ -1,0 +1,60 @@
+# Thesis-aligned primary protocol from accepted trabajo_de_grado.md
+# Role: 2021-2024 development/calibration, 2025 out-of-sample validation.
+
+output_dir: results/thesis_primary_2021_2025
+validation_role: primary_thesis_protocol
+smoke_test: false
+
+period:
+  calibration_start: "2021-01-01"
+  calibration_end: "2024-12-31"
+  oos_start: "2025-01-01"
+  oos_end: "2025-12-31"
+
+rebalance: quarterly
+lookback_months: 36
+cost_bps: 10.0
+weight_drift: buy_and_hold
+rebalance_policy: calendar
+turnover_included: true
+
+universe_mode: public_approximate_pit
+investable_universe_dir: data/universe_master/investable_universe/investable_universe_snapshots
+prices_path: data/raw/yfinance_pilot_2021_2025/close.parquet
+volume_path: data/raw/yfinance_pilot_2021_2025/volume.parquet
+min_coverage_pct: 0.80
+min_avg_dollar_volume: 0.0
+
+thesis_selection:
+  min_assets: 10
+  max_assets: 25
+  use_peer_group_profiles: true
+  peer_group_min_size: 5
+  categories:
+    - excelentes
+    - aceptables
+    - rechazados
+
+criteria_required:
+  - cagr
+  - volatility
+  - sharpe
+  - liquidity
+  - tracking_error
+  - expense_ratio
+
+models_primary:
+  - SPY_buy_hold
+  - 60/40_SPY_BND_fixed_weight
+  - Universe_EqualWeight_walk_forward
+  - Universe_MinVariance_walk_forward
+  - ELECTRE_EqualWeight_walk_forward
+  - ELECTRE_InverseVol_walk_forward
+  - ELECTRE_MinVariance_walk_forward
+experimental_models:
+  - ELECTRE_MaxSharpe_walk_forward
+
+claim_boundaries:
+  public_data: "public_approximate_pit reduces static-universe bias but is not institutional survivorship-bias-free."
+  validation: "2025 is the accepted out-of-sample validation year."
+  max_sharpe: "MaxSharpe is reported as experimental and not attributed solely to ELECTRE selection."

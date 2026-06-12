@@ -1,0 +1,186 @@
+# GOAL 4 ETF criteria redesign.
+# Hard filters are eligibility gates applied before ELECTRE/FlowSort; they are
+# intentionally not MCDM criteria. MCDM criteria should be computed only from
+# information available at each rebalance date.
+criteria:
+  - criterion_name: exclude_leveraged_etfs
+    formula: "Reject ETFs with leveraged objective/metadata flag or names matching leveraged 2x/3x terms."
+    lookback_window: as_of_rebalance_date
+    orientation: minimize
+    is_hard_filter: true
+    missing_data_rule: "If leverage flag is missing, infer from SEC/Nasdaq/name metadata; unresolved cases require manual audit before thesis-grade runs."
+    winsorization_rule: none_boolean_gate
+    normalization_rule: none_boolean_gate
+    source: "SEC Series/Class and N-CEN metadata; Nasdaq Trader Symbol Directory; approved vendor ETF metadata when available"
+  - criterion_name: exclude_inverse_etfs
+    formula: "Reject ETFs with inverse/short objective/metadata flag or names matching inverse/short bear terms."
+    lookback_window: as_of_rebalance_date
+    orientation: minimize
+    is_hard_filter: true
+    missing_data_rule: "If inverse flag is missing, infer from SEC/Nasdaq/name metadata; unresolved cases require manual audit before thesis-grade runs."
+    winsorization_rule: none_boolean_gate
+    normalization_rule: none_boolean_gate
+    source: "SEC Series/Class and N-CEN metadata; Nasdaq Trader Symbol Directory; approved vendor ETF metadata when available"
+  - criterion_name: exclude_etns
+    formula: "Reject exchange-traded notes unless explicitly justified in the experiment manifest."
+    lookback_window: as_of_rebalance_date
+    orientation: minimize
+    is_hard_filter: true
+    missing_data_rule: "Missing product type is not silently accepted; classify from SEC issuer/product metadata, Nasdaq directory, or manual audit."
+    winsorization_rule: none_boolean_gate
+    normalization_rule: none_boolean_gate
+    source: "Nasdaq Trader Symbol Directory ETF flag/type fields; SEC metadata; vendor security master when approved"
+  - criterion_name: minimum_history_months
+    formula: "months_between(inception_or_first_valid_price_date, rebalance_date) >= configured minimum; default thesis candidate: 24 months."
+    lookback_window: as_of_rebalance_date
+    orientation: maximize
+    is_hard_filter: true
+    missing_data_rule: "Use first valid adjusted-price date when inception date is unavailable; reject if both are unavailable."
+    winsorization_rule: none_threshold_gate
+    normalization_rule: none_threshold_gate
+    source: "SEC Series/Class first_seen/inception metadata plus local adjusted-price panel"
+  - criterion_name: minimum_avg_dollar_volume
+    formula: "mean(adjusted_close * volume) over trailing liquidity window >= configured minimum."
+    lookback_window: trailing_63_trading_days
+    orientation: maximize
+    is_hard_filter: true
+    missing_data_rule: "Reject from investable universe for the fold if price or volume coverage is insufficient in the trailing window."
+    winsorization_rule: none_threshold_gate
+    normalization_rule: none_threshold_gate
+    source: "Approved OHLCV vendor; public pilot may use yfinance with public-data caveat"
+  - criterion_name: minimum_aum_usd
+    formula: "AUM as of latest available filing/vendor snapshot before rebalance date >= configured minimum."
+    lookback_window: latest_available_as_of_rebalance_date
+    orientation: maximize
+    is_hard_filter: true
+    missing_data_rule: "For no-pay public runs, do not reject solely for missing AUM; mark public_approximate_pit and apply sensitivity with/without missing-AUM names."
+    winsorization_rule: none_threshold_gate
+    normalization_rule: none_threshold_gate
+    source: "N-CEN/N-PORT where available; Norgate/Morningstar/LSEG/FactSet if approved; public vendor metadata as pilot-only"
+  - criterion_name: maximum_expense_ratio
+    formula: "net_expense_ratio <= configured maximum."
+    lookback_window: latest_available_as_of_rebalance_date
+    orientation: minimize
+    is_hard_filter: true
+    missing_data_rule: "Do not impute as zero; for public runs retain with missing-expense flag only if experiment is explicitly pilot-only."
+    winsorization_rule: none_threshold_gate
+    normalization_rule: none_threshold_gate
+    source: "Prospectus/N-CEN/vendor fund metadata; public ETF metadata only as pilot approximation"
+  - criterion_name: minimum_price_usd
+    formula: "adjusted_close at rebalance date >= configured minimum."
+    lookback_window: rebalance_date_or_previous_trading_day
+    orientation: maximize
+    is_hard_filter: true
+    missing_data_rule: "Reject if rebalance-date price cannot be aligned to the latest prior trading day."
+    winsorization_rule: none_threshold_gate
+    normalization_rule: none_threshold_gate
+    source: "Adjusted close price panel from approved price source"
+  - criterion_name: minimum_price_coverage_pct
+    formula: "non_missing_adjusted_prices / expected_trading_days over training window >= configured minimum."
+    lookback_window: training_window
+    orientation: maximize
+    is_hard_filter: true
+    missing_data_rule: "Reject from fold-specific eligible universe when coverage is below threshold."
+    winsorization_rule: none_threshold_gate
+    normalization_rule: none_threshold_gate
+    source: "Local adjusted-price panel with point-in-time universe membership audit"
+
+  - criterion_name: momentum_12_1
+    formula: "total_return(months t-12 through t-1), skipping the most recent month to reduce short-term reversal effects."
+    lookback_window: trailing_12_months_skip_1_month
+    orientation: maximize
+    is_hard_filter: false
+    missing_data_rule: "Require enough monthly observations after hard coverage gate; otherwise exclude from MCDM matrix for that fold."
+    winsorization_rule: "winsorize cross-section at 5th/95th percentiles per rebalance date."
+    normalization_rule: "robust z-score by rebalance cross-section before ELECTRE profile calibration."
+    source: "Adjusted/total-return price series available as of rebalance date"
+  - criterion_name: volatility_annualized
+    formula: "standard_deviation(periodic_returns) * sqrt(periods_per_year)."
+    lookback_window: trailing_12_months
+    orientation: minimize
+    is_hard_filter: false
+    missing_data_rule: "Require minimum return observations after coverage gate; otherwise exclude for that fold."
+    winsorization_rule: "winsorize cross-section at 5th/95th percentiles per rebalance date."
+    normalization_rule: "robust z-score; lower values preferred."
+    source: "Adjusted/total-return price series available as of rebalance date"
+  - criterion_name: rolling_max_drawdown
+    formula: "minimum cumulative drawdown over trailing window computed from periodic returns."
+    lookback_window: trailing_12_months
+    orientation: maximize
+    is_hard_filter: false
+    missing_data_rule: "Require minimum return observations after coverage gate; otherwise exclude for that fold."
+    winsorization_rule: "winsorize cross-section at 5th/95th percentiles per rebalance date."
+    normalization_rule: "robust z-score; values closer to zero are preferred."
+    source: "Adjusted/total-return price series available as of rebalance date"
+  - criterion_name: rolling_sortino
+    formula: "annualized excess return divided by annualized downside deviation over trailing window."
+    lookback_window: trailing_12_months
+    orientation: maximize
+    is_hard_filter: false
+    missing_data_rule: "If downside deviation is zero or observations are insufficient, set missing and exclude from MCDM matrix for the fold."
+    winsorization_rule: "winsorize cross-section at 5th/95th percentiles per rebalance date."
+    normalization_rule: "robust z-score by rebalance cross-section."
+    source: "Adjusted/total-return price series plus risk-free-rate series available as of rebalance date"
+  - criterion_name: avg_dollar_volume
+    formula: "mean(adjusted_close * volume) over trailing liquidity window."
+    lookback_window: trailing_63_trading_days
+    orientation: maximize
+    is_hard_filter: false
+    missing_data_rule: "Must pass hard liquidity coverage; missing remaining values exclude asset from MCDM matrix."
+    winsorization_rule: "log1p transform then winsorize at 5th/95th percentiles."
+    normalization_rule: "robust z-score after log1p transform."
+    source: "Approved OHLCV vendor; yfinance only for public pilot"
+  - criterion_name: expense_ratio
+    formula: "latest known net expense ratio as of rebalance date."
+    lookback_window: latest_available_as_of_rebalance_date
+    orientation: minimize
+    is_hard_filter: false
+    missing_data_rule: "Do not impute as zero; retain only if source provides as-of value, or label run as pilot when using current metadata."
+    winsorization_rule: "winsorize cross-section at 1st/99th percentiles if enough observations; otherwise no winsorization."
+    normalization_rule: "robust z-score; lower values preferred."
+    source: "Prospectus/N-CEN/vendor fund metadata; public metadata is pilot-only if not point-in-time"
+  - criterion_name: tracking_error_vs_category_benchmark
+    formula: "annualized standard deviation of ETF returns minus mapped category-benchmark returns."
+    lookback_window: trailing_12_months
+    orientation: minimize
+    is_hard_filter: false
+    missing_data_rule: "If category benchmark mapping is missing, exclude criterion for that ETF/fold or run documented sensitivity without this criterion."
+    winsorization_rule: "winsorize cross-section at 5th/95th percentiles per rebalance date."
+    normalization_rule: "robust z-score; lower values preferred."
+    source: "Adjusted/total-return ETF series plus thesis benchmark mapping table"
+  - criterion_name: beta_vs_category_benchmark
+    formula: "cov(ETF returns, category benchmark returns) / var(category benchmark returns)."
+    lookback_window: trailing_24_months
+    orientation: minimize
+    is_hard_filter: false
+    missing_data_rule: "Require benchmark mapping and sufficient paired observations; otherwise missing for that fold."
+    winsorization_rule: "winsorize cross-section at 5th/95th percentiles per rebalance date."
+    normalization_rule: "robust z-score; values nearer defensive/low beta are preferred unless experiment specifies category-neutral target."
+    source: "Adjusted/total-return ETF series plus thesis benchmark mapping table"
+  - criterion_name: marginal_correlation_to_selected_universe
+    formula: "average pairwise correlation between candidate returns and assets already selected/accepted in the fold."
+    lookback_window: trailing_24_months
+    orientation: minimize
+    is_hard_filter: false
+    missing_data_rule: "If no provisional selected universe exists, compute average correlation to the current eligible universe and document fallback."
+    winsorization_rule: "clip to [-1, 1]; no percentile winsorization after valid correlation bounds."
+    normalization_rule: "robust z-score; lower marginal correlation preferred for diversification."
+    source: "Adjusted/total-return price series available as of rebalance date"
+  - criterion_name: fund_age_months
+    formula: "months_between(inception_or_first_seen_date, rebalance_date)."
+    lookback_window: as_of_rebalance_date
+    orientation: maximize
+    is_hard_filter: false
+    missing_data_rule: "Use first valid price date if inception date unavailable; mark source fallback in fold artifact."
+    winsorization_rule: "winsorize cross-section at 1st/99th percentiles or cap at 240 months for stability."
+    normalization_rule: "robust z-score or monotone min-max after cap."
+    source: "SEC Series/Class metadata, N-CEN, vendor security master, and local first-valid price fallback"
+  - criterion_name: aum_usd
+    formula: "latest known fund assets/AUM as of rebalance date."
+    lookback_window: latest_available_as_of_rebalance_date
+    orientation: maximize
+    is_hard_filter: false
+    missing_data_rule: "For public pilot runs, allow missing with explicit caveat; for thesis-grade runs require as-of source or sensitivity analysis."
+    winsorization_rule: "log1p transform then winsorize at 5th/95th percentiles."
+    normalization_rule: "robust z-score after log1p transform."
+    source: "N-CEN/N-PORT where feasible; Norgate/Morningstar/LSEG/FactSet if approved; public metadata only as pilot approximation"

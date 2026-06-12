@@ -1,0 +1,47 @@
+# Thesis-aligned extended robustness protocol.
+# Role: robustness/sensitivity only; it does not replace the accepted 2021-2024/2025 protocol.
+
+output_dir: results/thesis_extended_2015_2025
+validation_role: extended_robustness
+smoke_test: false
+
+period:
+  start: "2015-01-01"
+  end: "2025-12-31"
+
+rebalance: quarterly
+lookback_months: 36
+minimum_oos_months: 60
+cost_bps: 10.0
+weight_drift: buy_and_hold
+rebalance_policy: calendar
+turnover_included: true
+
+universe_mode: public_approximate_pit
+investable_universe_dir: data/universe_master/investable_universe/investable_universe_snapshots
+prices_path: data/raw/yfinance_pilot_2015_2025/close.parquet
+volume_path: data/raw/yfinance_pilot_2015_2025/volume.parquet
+min_coverage_pct: 0.80
+min_avg_dollar_volume: 0.0
+
+thesis_selection:
+  min_assets: 10
+  max_assets: 25
+  use_peer_group_profiles: true
+  peer_group_min_size: 5
+
+models_robustness:
+  - SPY_buy_hold
+  - 60/40_SPY_BND_fixed_weight
+  - Universe_EqualWeight_walk_forward
+  - Universe_MinVariance_walk_forward
+  - ELECTRE_EqualWeight_walk_forward
+  - ELECTRE_InverseVol_walk_forward
+  - ELECTRE_MinVariance_walk_forward
+experimental_models:
+  - ELECTRE_MaxSharpe_walk_forward
+
+claim_boundaries:
+  public_data: "public_approximate_pit reduces static-universe bias but is not institutional survivorship-bias-free."
+  validation: "2015-2025 is extended robustness evidence, not a replacement for the accepted thesis protocol."
+  max_sharpe: "MaxSharpe is reported as experimental and not attributed solely to ELECTRE selection."

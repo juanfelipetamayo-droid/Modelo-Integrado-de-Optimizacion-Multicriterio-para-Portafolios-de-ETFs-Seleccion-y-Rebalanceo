@@ -58,3 +58,52 @@ def test_save_ohlcv(tmp_path: Path):
 def test_download_ohlcv_batch_empty():
     result = download_ohlcv_batch([], "2021-01-01", "2021-12-31")
     assert isinstance(result, dict)
+    assert result.frames == {}
+    assert result.failed_tickers == []
+    assert result.errors == {}
+
+
+def test_download_ohlcv_batch_records_missing_ticker_without_dropping_frames(monkeypatch):
+    idx = pd.bdate_range("2021-01-01", "2021-01-08")
+    close = pd.DataFrame({"SPY": [100.0] * len(idx)}, index=idx)
+
+    def fake_download_ohlcv(tickers, start, end, auto_adjust=True):
+        assert tickers == ["SPY", "MISSING"]
+        return {"close": close}
+
+    monkeypatch.setattr("etf_optimizer.data.fetcher.download_ohlcv", fake_download_ohlcv)
+
+    result = download_ohlcv_batch(
+        ["SPY", "MISSING"],
+        "2021-01-01",
+        "2021-01-08",
+        batch_size=2,
+        max_retries=1,
+    )
+
+    assert result.frames["close"].columns.tolist() == ["SPY"]
+    assert result["close"].equals(close)
+    assert result.failed_tickers == ["MISSING"]
+    assert result.errors == {"MISSING": "missing_from_download"}
+
+
+def test_download_ohlcv_batch_records_batch_exception_per_ticker(monkeypatch):
+    def fake_download_ohlcv(tickers, start, end, auto_adjust=True):
+        if tickers == ["BAD"]:
+            raise RuntimeError("yahoo unavailable")
+        idx = pd.bdate_range("2021-01-01", "2021-01-08")
+        return {"close": pd.DataFrame({tickers[0]: [100.0] * len(idx)}, index=idx)}
+
+    monkeypatch.setattr("etf_optimizer.data.fetcher.download_ohlcv", fake_download_ohlcv)
+
+    result = download_ohlcv_batch(
+        ["SPY", "BAD"],
+        "2021-01-01",
+        "2021-01-08",
+        batch_size=1,
+        max_retries=1,
+    )
+
+    assert result.frames["close"].columns.tolist() == ["SPY"]
+    assert result.failed_tickers == ["BAD"]
+    assert result.errors == {"BAD": "yahoo unavailable"}
