@@ -22,6 +22,7 @@ skills-lock.json
 *.sqlite
 *.sqlite3
 *.log
+*.rar
 docs/research/**/*.pdf
 docs/research/*.pdf
 docs/research/**/*.docx
