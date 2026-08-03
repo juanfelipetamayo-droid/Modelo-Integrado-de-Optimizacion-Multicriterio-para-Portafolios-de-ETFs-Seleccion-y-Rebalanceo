@@ -4,10 +4,10 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
-data/raw/
-data/processed/
-data/
-results/
+/data/raw/
+/data/processed/
+/data/
+/results/
 .DS_Store
 .hermes/
 .agents/
