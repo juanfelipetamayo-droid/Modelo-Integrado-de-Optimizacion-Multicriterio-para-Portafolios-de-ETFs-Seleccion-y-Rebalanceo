@@ -1,0 +1,12 @@
+criterion_name,weight,method,elicitation_source,rationale
+momentum_12_1,0.12000000000000001,manual_weights_baseline,Researcher baseline retained only for comparison; not primary thesis specification.,Captura persistencia intermedia sin usar CAGR histórico dominante.
+volatility_annualized,0.11000000000000001,manual_weights_baseline,Researcher baseline retained only for comparison; not primary thesis specification.,Controla riesgo total ex ante dentro de la clasificación MCDM.
+rolling_max_drawdown,0.14000000000000004,manual_weights_baseline,Researcher baseline retained only for comparison; not primary thesis specification.,Prioridad principal BWM: limita fragilidad de cola observada en OOS largo.
+rolling_sortino,0.12000000000000001,manual_weights_baseline,Researcher baseline retained only for comparison; not primary thesis specification.,Premia retorno ajustado por downside sin depender de CAGR puro.
+avg_dollar_volume,0.08000000000000002,manual_weights_baseline,Researcher baseline retained only for comparison; not primary thesis specification.,Asegura liquidez operable después de filtros duros.
+expense_ratio,0.08000000000000002,manual_weights_baseline,Researcher baseline retained only for comparison; not primary thesis specification.,Penaliza fricción estructural del ETF.
+tracking_error_vs_category_benchmark,0.10000000000000002,manual_weights_baseline,Researcher baseline retained only for comparison; not primary thesis specification.,Favorece eficiencia de implementación frente al benchmark correcto.
+beta_vs_category_benchmark,0.08000000000000002,manual_weights_baseline,Researcher baseline retained only for comparison; not primary thesis specification.,Controla sensibilidad sistemática por categoría.
+marginal_correlation_to_selected_universe,0.10000000000000002,manual_weights_baseline,Researcher baseline retained only for comparison; not primary thesis specification.,Introduce beneficio de diversificación marginal.
+fund_age_months,0.030000000000000002,manual_weights_baseline,Researcher baseline retained only for comparison; not primary thesis specification.,"Criterio secundario; estabilidad operativa, no driver principal."
+aum_usd,0.04000000000000001,manual_weights_baseline,Researcher baseline retained only for comparison; not primary thesis specification.,"Proxy de escala/viabilidad, subordinado a riesgo y calidad de seguimiento."

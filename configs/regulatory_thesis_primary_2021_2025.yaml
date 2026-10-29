@@ -1,0 +1,42 @@
+protocol: regulatory_enriched_etf_universe
+validation_role: thesis_aligned_principal
+universe_mode: regulatory_enriched_pit
+period:
+  development_start: '2021-01-01'
+  development_end: '2024-12-31'
+  oos_start: '2025-01-01'
+  oos_end: '2025-12-31'
+data_sources:
+  primary:
+    - sec_nport
+    - sec_ncen
+    - sec_edgar_submissions
+  enrichment:
+    - openfigi
+    - issuer_metadata
+    - public_price_yfinance
+pit_controls:
+  rule: public_available_date <= decision_date
+  fallback_lag_days_when_public_date_unknown: 45
+criteria:
+  required:
+    - cagr
+    - volatility
+    - sharpe
+    - liquidity
+    - tracking_error
+    - expense_ratio
+selection:
+  min_assets_per_rebalance: 10
+  max_assets_per_rebalance: 25
+benchmarks:
+  required:
+    - SPY_buy_hold
+    - 60/40_SPY_BND_fixed_weight
+    - Universe_EqualWeight_walk_forward
+claims:
+  allow: public_regulatory_enriched_approximate_pit
+  prohibit:
+    - fully_point_in_time
+    - institutional_survivorship_bias_free
+    - guaranteed_benchmark_outperformance

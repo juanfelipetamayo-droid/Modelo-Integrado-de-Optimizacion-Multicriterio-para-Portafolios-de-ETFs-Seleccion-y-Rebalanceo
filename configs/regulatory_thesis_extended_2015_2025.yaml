@@ -1,0 +1,36 @@
+protocol: regulatory_enriched_etf_universe
+validation_role: extended_robustness_not_replacement
+universe_mode: regulatory_enriched_pit_extended_public_data_limited
+period:
+  start: '2015-01-01'
+  end: '2025-12-31'
+data_sources:
+  primary_2019_plus:
+    - sec_nport
+    - sec_ncen
+    - sec_edgar_submissions
+  pre_2019_fallback:
+    - sec_series_class_annual_snapshots
+    - public_price_yfinance
+limitations:
+  - Pre-2019 public regulatory PIT coverage is incomplete.
+  - This run is robustness evidence and does not replace the principal 2021-2024/2025 protocol.
+pit_controls:
+  rule: public_available_date <= decision_date where available; conservative lag fallback otherwise
+criteria:
+  required:
+    - cagr
+    - volatility
+    - sharpe
+    - liquidity
+    - tracking_error
+    - expense_ratio
+selection:
+  min_assets_per_rebalance: 10
+  max_assets_per_rebalance: 25
+claims:
+  allow: extended_public_data_robustness
+  prohibit:
+    - fully_point_in_time_2015_2025
+    - institutional_survivorship_bias_free
+    - replacement_for_principal_protocol

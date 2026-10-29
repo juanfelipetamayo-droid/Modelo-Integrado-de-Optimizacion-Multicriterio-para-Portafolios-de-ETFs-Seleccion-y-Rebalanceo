@@ -1,0 +1,11 @@
+metric,count,pct
+total_funds,4554,100.0
+ticker_present,4554,100.0
+name_present,4554,100.0
+cik_present,166,3.65
+exchange_present,166,3.65
+sponsor_present,0,0.0
+inception_date_present,0,0.0
+termination_date_present,0,0.0
+source_nasdaq,4554,100.0
+active,4554,100.0
