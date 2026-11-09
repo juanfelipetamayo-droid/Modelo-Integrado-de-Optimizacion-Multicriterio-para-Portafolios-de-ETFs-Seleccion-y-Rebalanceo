@@ -1,7 +1,7 @@
 [project]
 name = "etf-optimizer"
 version = "0.1.0"
-description = "Research-backed multicriteria ETF selection, portfolio optimization, rebalancing, and walk-forward backtesting."
+description = "tesis juan felipe tamayo mejia codigo 201943693"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{name = "Juan Felipe Tamayo Mejía"}]

@@ -1,7 +1,7 @@
 # Modelo integrado de optimización multicriterio para portafolios de ETFs: selección y rebalanceo
 
 Trabajo de grado de investigación, Programa de Ingeniería Industrial, Universidad del Valle.
-Autor: Juan Felipe Tamayo Mejía. Directores: PhD. Diego Fernando Manotas Duque y PhD. Orlando Joaqui Barandica.
+Autor: Juan Felipe Tamayo Mejía. Código: 201943693.
 
 El modelo clasifica ETFs del mercado estadounidense con ELECTRE Tri, conserva como máximo 25 fondos de la categoría superior, asigna capital (equiponderada, mínima varianza y máximo Sharpe), rebalancea cada tres meses y se evalúa mediante simulación con ventanas sucesivas (*walk-forward*) frente a SPY, una cartera 60/40 y el universo equiponderado.
 
@@ -62,3 +62,11 @@ Los paneles de precios (`data/`) y los resultados (`results/`, `results_rerun/`)
 ## Licencia de los datos
 
 Los datos provienen de fuentes públicas (Yahoo Finance, Nasdaq y la Comisión de Bolsa y Valores de Estados Unidos) y se usan únicamente con fines académicos.
+
+## Si alguien retoma este proyecto
+
+Lo primero que mejoraría son los datos. Trabajé con fuentes públicas, pero eso deja huecos importantes: no siempre se consiguen los precios de los fondos que cerraron o se fusionaron, ni el historial completo de sus comisiones y de qué tan bien seguían a su índice. Ampliar la lista de ETFs ayudó con la muestra inicial, pero no eliminó el sesgo de supervivencia.
+
+Tener acceso a bases de pago como CRSP o Morningstar podría mejorar mucho la rigurosidad académica del modelo. Antes de contratar algo, hay que comprobar que el producto incluya ETFs, fondos retirados, precios ajustados y los datos históricos que hacen falta. Pagar por una base no garantiza que tenga todo eso. La idea es reconstruir qué fondos y qué información estaban disponibles en cada fecha, en vez de mirar el pasado con la lista de fondos que siguen vivos hoy.
+
+Con esos datos volvería a correr la misma configuración y los mismos referentes, sin cambiar parámetros para que el resultado salga mejor. Después revisaría los pesos con expertos y la concentración entre fondos que terminan invirtiendo en cosas muy parecidas. Datos mejores hacen más defendible la comparación; no garantizan ganarle a SPY. Si la universidad ya tiene acceso, empezaría preguntando en la biblioteca. Y si se usan datos con licencia, en este repositorio dejaría el código y las instrucciones para obtenerlos, no una copia de la base sin permiso.
